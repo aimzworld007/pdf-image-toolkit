@@ -104,4 +104,4 @@ You can open the index.html file in any modern web browser to test the client-si
 Important Note: The "Pro" features (Compress JPG, Compress PDF, PDF to JPG) will not work when you open the file locally. They require the Netlify server environment to run. The browser console will show a "Failed to parse URL" error, which is expected in a local environment. To test these features, you must deploy the site to Netlify.
 
 © Credits
-This application was developed by Ainulislam with the assistance of Gemini.
+This application was developed by Ainul islam with the assistance of Gemini.
