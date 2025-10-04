@@ -32,7 +32,6 @@ exports.handler = async (event) => {
     const pdfBuffer = Buffer.from(base64Data, 'base64');
     
     // Use sharp with density to improve rendering quality for complex PDFs
-    const imagePromises = [];
     const metadata = await sharp(pdfBuffer).metadata();
     const pageCount = metadata.pages || 0;
     
@@ -40,17 +39,15 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'Could not find any pages in the PDF.' }) };
     }
 
-    // Process all pages
+    const images = [];
+    // Process pages sequentially to conserve memory on large files
     for (let i = 0; i < pageCount; i++) {
-        imagePromises.push(
-            sharp(pdfBuffer, { page: i, density: 300 }) // Increase density for better quality
-                .jpeg({ quality: 90 })
-                .toBuffer()
-                .then(buffer => buffer.toString('base64'))
-        );
+        const imageBuffer = await sharp(pdfBuffer, { page: i, density: 300 }) // Increase density for better quality
+            .jpeg({ quality: 90 })
+            .toBuffer();
+        
+        images.push(imageBuffer.toString('base64'));
     }
-
-    const images = await Promise.all(imagePromises);
 
     return {
       statusCode: 200,

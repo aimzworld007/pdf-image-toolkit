@@ -177,7 +177,7 @@
                 <!-- PDF Tools -->
                 <a href="#" class="tab-link" data-tool="jpg-to-pdf">JPG to PDF</a>
                 <a href="#" class="tab-link" data-tool="images-to-pdf">Images to PDF</a>
-                <a href="#" class="tab-link" data-tool="pdf-to-jpg">PDF to JPG<span class="pro-badge-inline">Pro</span></a>
+                <a href="#" class="tab-link" data-tool="pdf-to-jpg">PDF to JPG</a>
                 <a href="#" class="tab-link" data-tool="combine-to-pdf">Merge to PDF</a>
                 <a href="#" class="tab-link" data-tool="compress-pdf">Compress PDF<span class="pro-badge-inline">Pro</span></a>
                 <!-- Image Tools -->
@@ -240,7 +240,7 @@
 
     <!-- Templates for each tool -->
     <template id="template-jpg-to-pdf"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4 text-[var(--text-primary)]">JPG to PDF Converter</h2><p class="mb-4 text-[var(--text-secondary)]">Drop a JPG image to convert it into a PDF document.</p><div class="drop-zone-container"></div><button id="convertToPdfBtn" class="action-btn">Convert to PDF</button><div id="jpg-to-pdf-output" class="output-area"></div><div class="external-tools-container"></div><div class="suggestions-container"><h3 class="text-lg font-semibold mb-3 text-center text-[var(--text-secondary)]">You might also like...</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><a href="#" class="suggestion-card" data-tool="images-to-pdf"><h4 class="font-bold text-[var(--text-primary)]">Images to PDF</h4><p class="text-sm text-[var(--text-secondary)]">Combine multiple images.</p></a><a href="#" class="suggestion-card" data-tool="compress-pdf"><h4 class="font-bold text-[var(--text-primary)]">Compress PDF</h4><p class="text-sm text-[var(--text-secondary)]">Reduce PDF file size.</p></a><a href="#" class="suggestion-card" data-tool="convert-image" data-target-format="jpeg"><h4 class="font-bold text-[var(--text-primary)]">PNG to JPG</h4><p class="text-sm text-[var(--text-secondary)]">Convert image formats.</p></a></div></div></div></template>
-    <template id="template-pdf-to-jpg"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4 text-[var(--text-primary)]">PDF to JPG Converter (Pro)</h2><p class="mb-4 text-[var(--text-secondary)]">Drop a PDF file to convert its pages into high-quality JPG images.</p><div class="drop-zone-container"></div><button id="convertToJpgBtn" class="action-btn">Convert to JPG</button><div id="pdf-to-jpg-output" class="output-area grid grid-cols-2 md:grid-cols-4 gap-4"></div><div class="external-tools-container"></div><div class="suggestions-container"><h3 class="text-lg font-semibold mb-3 text-center text-[var(--text-secondary)]">You might also like...</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><a href="#" class="suggestion-card" data-tool="combine-to-pdf"><h4 class="font-bold text-[var(--text-primary)]">Merge to PDF</h4><p class="text-sm text-[var(--text-secondary)]">Merge multiple files to PDF.</p></a><a href="#" class="suggestion-card" data-tool="compress-jpg"><h4 class="font-bold text-[var(--text-primary)]">Compress JPG</h4><p class="text-sm text-[var(--text-secondary)]">Shrink image file sizes.</p></a><a href="#" class="suggestion-card" data-tool="crop-image"><h4 class="font-bold text-[var(--text-primary)]">Image Cropper</h4><p class="text-sm text-[var(--text-secondary)]">Crop your new images.</p></a></div></div></div></template>
+    <template id="template-pdf-to-jpg"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4 text-[var(--text-primary)]">PDF to JPG Converter</h2><p class="mb-4 text-[var(--text-secondary)]">Drop a PDF file to convert its pages into JPG images directly in your browser.</p><div class="drop-zone-container"></div><button id="convertToJpgBtn" class="action-btn">Convert to JPG</button><div id="pdf-to-jpg-output" class="output-area grid grid-cols-2 md:grid-cols-4 gap-4"></div><div class="external-tools-container"></div><div class="suggestions-container"><h3 class="text-lg font-semibold mb-3 text-center text-[var(--text-secondary)]">You might also like...</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><a href="#" class="suggestion-card" data-tool="combine-to-pdf"><h4 class="font-bold text-[var(--text-primary)]">Merge to PDF</h4><p class="text-sm text-[var(--text-secondary)]">Merge multiple files to PDF.</p></a><a href="#" class="suggestion-card" data-tool="compress-jpg"><h4 class="font-bold text-[var(--text-primary)]">Compress JPG</h4><p class="text-sm text-[var(--text-secondary)]">Shrink image file sizes.</p></a><a href="#" class="suggestion-card" data-tool="crop-image"><h4 class="font-bold text-[var(--text-primary)]">Image Cropper</h4><p class="text-sm text-[var(--text-secondary)]">Crop your new images.</p></a></div></div></div></template>
     <template id="template-merge-images"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4">Merge Images</h2><p class="mb-4 text-[var(--text-secondary)]">Drop two images to merge them vertically or horizontally.</p><div class="grid md:grid-cols-2 gap-4"><div class="drop-zone-container" data-input-id="img1"></div><div class="drop-zone-container" data-input-id="img2"></div></div><div class="flex items-center gap-4 my-4"><label class="font-medium">Merge Direction:</label><select id="mergeDirection" class="p-2 border rounded-md bg-[var(--bg-primary)] border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]"><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option></select></div><button id="mergeBtn" class="action-btn">Merge Images</button><div id="merge-output" class="output-area"></div><div class="external-tools-container"></div><div class="suggestions-container"><h3 class="text-lg font-semibold mb-3 text-center text-[var(--text-secondary)]">You might also like...</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><a href="#" class="suggestion-card" data-tool="crop-image"><h4 class="font-bold text-[var(--text-primary)]">Image Cropper</h4><p class="text-sm text-[var(--text-secondary)]">Crop images before merging.</p></a><a href="#" class="suggestion-card" data-tool="resize-image"><h4 class="font-bold text-[var(--text-primary)]">Image Resizer</h4><p class="text-sm text-[var(--text-secondary)]">Resize images to match.</p></a><a href="#" class="suggestion-card" data-tool="images-to-pdf"><h4 class="font-bold text-[var(--text-primary)]">Images to PDF</h4><p class="text-sm text-[var(--text-secondary)]">Save result to a PDF.</p></a></div></div></div></template>
     <template id="template-convert-image"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4">Image Format Converter</h2><p class="mb-4 text-[var(--text-secondary)]">Drop an image to convert its format.</p><div class="drop-zone-container"></div><div class="flex items-center gap-4 my-4"><label class="font-medium">Convert To:</label><select id="convertFormat" class="p-2 border rounded-md bg-[var(--bg-primary)] border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]"><option value="png">PNG</option><option value="jpeg">JPG</option></select></div><button id="convertImgBtn" class="action-btn">Convert Image</button><div id="convert-output" class="output-area"></div><div class="external-tools-container"></div><div class="suggestions-container"><h3 class="text-lg font-semibold mb-3 text-center text-[var(--text-secondary)]">You might also like...</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><a href="#" class="suggestion-card" data-tool="compress-jpg"><h4 class="font-bold text-[var(--text-primary)]">Compress JPG</h4><p class="text-sm text-[var(--text-secondary)]">Reduce file size after.</p></a><a href="#" class="suggestion-card" data-tool="resize-image"><h4 class="font-bold text-[var(--text-primary)]">Resize Image</h4><p class="text-sm text-[var(--text-secondary)]">Change image dimensions.</p></a><a href="#" class="suggestion-card" data-tool="jpg-to-pdf"><h4 class="font-bold text-[var(--text-primary)]">JPG to PDF</h4><p class="text-sm text-[var(--text-secondary)]">Convert JPGs to PDF.</p></a></div></div></div></template>
     <template id="template-images-to-pdf"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4">Combine Images into PDF</h2><p class="mb-4 text-[var(--text-secondary)]">Drop images to combine them. Drag and drop previews to reorder.</p><div class="drop-zone-container"></div><button id="combineToPdfBtn" class="action-btn">Combine to PDF</button><div id="image-preview-list" class="output-area mt-4 grid grid-cols-2 md:grid-cols-4 gap-4"></div><div class="external-tools-container"></div><div class="suggestions-container"><h3 class="text-lg font-semibold mb-3 text-center text-[var(--text-secondary)]">You might also like...</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><a href="#" class="suggestion-card" data-tool="combine-to-pdf"><h4 class="font-bold text-[var(--text-primary)]">Merge to PDF</h4><p class="text-sm text-[var(--text-secondary)]">Merge with other PDFs.</p></a><a href="#" class="suggestion-card" data-tool="compress-pdf"><h4 class="font-bold text-[var(--text-primary)]">Compress PDF</h4><p class="text-sm text-[var(--text-secondary)]">Reduce the final PDF size.</p></a><a href="#" class="suggestion-card" data-tool="resize-image"><h4 class="font-bold text-[var(--text-primary)]">Image Resizer</h4><p class="text-sm text-[var(--text-secondary)]">Standardize image sizes.</p></a></div></div></div></template>
@@ -411,13 +411,14 @@
             function addToolEventListeners(toolId) {
                 const getEl = (id) => activeToolContainer.querySelector('#' + id);
                 const getDropContainer = (id) => activeToolContainer.querySelector(`.drop-zone-container[data-input-id="${id}"]`) || activeToolContainer.querySelector('.drop-zone-container');
-
+                
                 // Inject external tools link into every tool
                 const externalToolsContainer = activeToolContainer.querySelector('.external-tools-container');
                 if (externalToolsContainer) {
                     const externalToolsTemplate = document.getElementById('template-external-tools').content.cloneNode(true);
                     externalToolsContainer.appendChild(externalToolsTemplate);
                 }
+
 
                 switch (toolId) {
                     case 'jpg-to-pdf': 
@@ -486,33 +487,6 @@
             });
         
             // --- SERVER-SIDE TOOL IMPLEMENTATIONS ---
-            async function handlePdfToJpg() {
-                const file = filesStore.get("pdfFile");
-                const outputDiv = activeToolContainer.querySelector("#pdf-to-jpg-output");
-                if (!file) { alert('Please select a PDF file.'); return; }
-                showLoader(true, "Uploading file...");
-                outputDiv.innerHTML = "";
-                try {
-                    const pdfDataUrl = await fileToDataUrl(file);
-                    showLoader(true, "Extracting pages...");
-                    const response = await fetch("/.netlify/functions/pdf-to-jpg", { method: "POST", body: JSON.stringify({ pdf: pdfDataUrl }) });
-                    if (!response.ok) { const err = await response.json(); throw new Error(err.error || "Server error") }
-                    const { images } = await response.json();
-                    if (!Array.isArray(images)) { throw new Error("Server returned invalid data."); }
-                    showLoader(true, "Finalizing...");
-                    images.forEach(((base64Img, index) => {
-                        const a = document.createElement("a");
-                        a.href = `data:image/jpeg;base64,${base64Img}`;
-                        a.download = `page_${index + 1}.jpg`;
-                        a.innerHTML = `<img src="${a.href}" class="w-full h-auto object-cover rounded-lg shadow-md border border-[var(--border-color)]">`;
-                        outputDiv.appendChild(a);
-                    }))
-                } catch (error) {
-                    console.error("PDF to JPG Error:", error);
-                    outputDiv.innerHTML = `<p class="text-red-500 col-span-full">Error: ${error.message}</p>`
-                } finally { showLoader(false) }
-            }
-
             async function handleCompressJpg() {
                 const file = filesStore.get("compressJpgFile");
                 const quality = parseInt(activeToolContainer.querySelector("#qualitySlider").value, 10);
@@ -567,6 +541,49 @@
             }
             
             // --- CLIENT-SIDE TOOL IMPLEMENTATIONS ---
+            async function handlePdfToJpg() {
+                const file = filesStore.get("pdfFile");
+                const outputDiv = activeToolContainer.querySelector("#pdf-to-jpg-output");
+                if (!file) {
+                    alert('Please select a PDF file.');
+                    return;
+                }
+                showLoader(true, 'Reading PDF...');
+                outputDiv.innerHTML = '';
+
+                const fileReader = new FileReader();
+                fileReader.onload = async function() {
+                    try {
+                        const typedarray = new Uint8Array(this.result);
+                        const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                        
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            showLoader(true, `Processing page ${i} of ${pdf.numPages}...`);
+                            const page = await pdf.getPage(i);
+                            const viewport = page.getViewport({ scale: 1.5 });
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+
+                            await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+                            const a = document.createElement('a');
+                            a.href = canvas.toDataURL('image/jpeg', 0.9);
+                            a.download = `page_${i}.jpg`;
+                            a.innerHTML = `<img src="${a.href}" class="w-full h-auto object-cover rounded-lg shadow-md border border-[var(--border-color)]" alt="Page ${i}">`;
+                            outputDiv.appendChild(a);
+                        }
+                    } catch (error) {
+                        console.error("PDF to JPG Error:", error);
+                        outputDiv.innerHTML = `<p class="text-red-500 col-span-full">Error: Could not process the PDF. It may be corrupt.</p>`;
+                    } finally {
+                        showLoader(false);
+                    }
+                };
+                fileReader.readAsArrayBuffer(file);
+            }
+
             async function handleCombineAllToPdf() {
                 const filesToCombine = filesStore.get('multipleFiles') || [];
                 if (filesToCombine.length < 1) { return void alert("Please add at least one file to combine."); }
@@ -700,7 +717,10 @@
                 const outputDiv = activeToolContainer.querySelector("#merge-output");
                 if (!file1 || !file2) { return void alert("Please select two images."); }
                 showLoader(true);
-                const [img1, img2] = await Promise.all([loadImage(URL.createObjectURL(file1)), loadImage(URL.createObjectURL(file2))]);
+                const [img1, img2] = await Promise.all([
+                    loadImage(URL.createObjectURL(file1)), 
+                    loadImage(URL.createObjectURL(file2))
+                ]);
                 const canvas = document.createElement("canvas");
                 const ctx = canvas.getContext("2d");
                 if ("horizontal" === direction) {
