@@ -1,7 +1,20 @@
 // This is a Netlify serverless function.
 // It uses the 'sharp' library to robustly convert PDF pages to JPG images.
+// Updated to handle more complex PDFs and increase memory.
 
 const sharp = require('sharp');
+
+// Increase the memory limit for this function
+// Vercel and Netlify will respect this configuration.
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb', // Allow larger file uploads
+    },
+  },
+  memory: 1024, // Allocate 1GB of memory
+  maxDuration: 30, // Extend timeout to 30 seconds
+};
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -18,20 +31,19 @@ exports.handler = async (event) => {
     const base64Data = pdf.replace(/^data:application\/pdf;base64,/, '');
     const pdfBuffer = Buffer.from(base64Data, 'base64');
     
-    // Use sharp to get metadata, specifically the number of pages
+    // Use sharp with density to improve rendering quality for complex PDFs
+    const imagePromises = [];
     const metadata = await sharp(pdfBuffer).metadata();
     const pageCount = metadata.pages || 0;
-
+    
     if (pageCount === 0) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Could not find any pages in the PDF.' }) };
     }
 
-    const imagePromises = [];
-
-    // Iterate through pages and create a conversion promise for each
+    // Process all pages
     for (let i = 0; i < pageCount; i++) {
         imagePromises.push(
-            sharp(pdfBuffer, { page: i })
+            sharp(pdfBuffer, { page: i, density: 300 }) // Increase density for better quality
                 .jpeg({ quality: 90 })
                 .toBuffer()
                 .then(buffer => buffer.toString('base64'))
