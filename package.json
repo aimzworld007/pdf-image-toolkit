@@ -1,0 +1,16 @@
+{
+  "name": "pdf-image-toolkit-serverless",
+  "version": "1.0.0",
+  "description": "Serverless functions for the PDF & Image Toolkit Pro",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@imgly/background-removal-node": "^1.4.0",
+    "pdf-lib": "^1.17.1",
+    "sharp": "^0.33.3"
+  }
+}
