@@ -42,9 +42,10 @@
             background-color: var(--bg-primary);
             color: var(--text-primary);
             transition: background-color 0.3s, color 0.3s;
+            padding-top: 5rem; /* Space for fixed global header */
         }
 
-        /* NEW TAB STYLES */
+        /* CATEGORY & TAB STYLES */
         .tabs-container {
             border-bottom: 2px solid var(--border-color);
             overflow-x: auto;
@@ -54,12 +55,19 @@
             display: none; /* Safari and Chrome */
         }
         .tab-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
             padding: 1rem 1.25rem;
             font-weight: 600;
             color: var(--text-secondary);
             border-bottom: 3px solid transparent;
             transition: color 0.2s, border-color 0.2s;
             white-space: nowrap;
+        }
+        .tab-link svg {
+            width: 1.25rem;
+            height: 1.25rem;
         }
         .tab-link:hover {
             color: var(--accent-color);
@@ -77,6 +85,11 @@
             border-radius: 9999px;
             margin-left: 6px;
             vertical-align: middle;
+        }
+
+        .scroll-btn:disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
         }
 
         /* Cropper.js specific dark mode styles */
@@ -154,49 +167,102 @@
             color: var(--text-secondary);
             font-size: 0.875rem;
         }
+        
+        .global-nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body class="min-h-screen">
 
-    <div id="app-container" class="container mx-auto p-4 md:p-8 max-w-5xl">
-        <!-- Header -->
-        <header class="flex justify-between items-center mb-6">
-            <div>
-                <h1 class="text-3xl md:text-4xl font-extrabold">PDF & Image <span class="text-[var(--accent-color)]">Toolkit</span></h1>
-                <p class="text-md text-[var(--text-secondary)] mt-1">Your one-stop solution for media manipulation.</p>
+    <!-- NEW Global Navigation Header -->
+    <header class="fixed top-0 left-0 right-0 z-20 bg-[var(--bg-secondary)] shadow-md">
+        <div class="container mx-auto px-4 md:px-8 flex justify-between items-center h-16">
+             <div>
+                <h1 class="text-xl font-extrabold hidden sm:block">PDF & Image <span class="text-[var(--accent-color)]">Toolkit</span></h1>
             </div>
-            <button id="theme-toggle" class="p-2 rounded-full hover:bg-[var(--border-color)] transition-colors">
-                <svg id="theme-icon-light" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                <svg id="theme-icon-dark" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-            </button>
-        </header>
+            <div class="flex items-center gap-2">
+                <button id="home-btn" title="Home" class="global-nav-btn p-2 rounded-full hover:bg-[var(--border-color)] transition-colors"><svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5" /></svg></button>
+                <button id="back-btn" title="Back" class="global-nav-btn p-2 rounded-full hover:bg-[var(--border-color)] transition-colors"><svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg></button>
+                <button id="refresh-btn" title="Refresh Page" class="global-nav-btn p-2 rounded-full hover:bg-[var(--border-color)] transition-colors"><svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.667 0l3.181-3.183m-4.991-2.691L7.985 5.944m11.667 0L7.985 17.308" /></svg></button>
+                <button id="clear-cache-btn" title="Clear App Data" class="global-nav-btn p-2 rounded-full hover:bg-[var(--border-color)] transition-colors"><svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v5.25m-4.5-4.5h9" /><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 7.5V12m0 0l-1.125-1.125M14.25 12l1.125-1.125m-3.75 3.375c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H9.75c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125h3.75z" /></svg></button>
+                <button id="theme-toggle" title="Toggle Theme" class="p-2 rounded-full hover:bg-[var(--border-color)] transition-colors">
+                    <svg id="theme-icon-light" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    <svg id="theme-icon-dark" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                </button>
+            </div>
+        </div>
+    </header>
 
-        <!-- Main Content Area with New Tab Navigation -->
-        <main class="bg-[var(--bg-secondary)] rounded-2xl shadow-lg">
-            <nav id="tabs-navigation" class="tabs-container flex">
-                <!-- PDF Tools -->
-                <a href="#" class="tab-link" data-tool="jpg-to-pdf">JPG to PDF</a>
-                <a href="#" class="tab-link" data-tool="images-to-pdf">Images to PDF</a>
-                <a href="#" class="tab-link" data-tool="pdf-to-jpg">PDF to JPG</a>
-                <a href="#" class="tab-link" data-tool="combine-to-pdf">Merge to PDF</a>
-                <a href="#" class="tab-link" data-tool="compress-pdf">Compress PDF<span class="pro-badge-inline">Pro</span></a>
-                <!-- Image Tools -->
-                <a href="#" class="tab-link" data-tool="compress-jpg">Compress JPG<span class="pro-badge-inline">Pro</span></a>
-                <a href="#" class="tab-link" data-tool="resize-image">Resize Image</a>
-                <a href="#" class="tab-link" data-tool="crop-image">Crop Image</a>
-                <a href="#" class="tab-link" data-tool="merge-images">Merge Images</a>
-                <a href="#" class="tab-link" data-tool="convert-image" data-target-format="png">JPG to PNG</a>
-                <a href="#" class="tab-link" data-tool="convert-image" data-target-format="jpeg">PNG to JPG</a>
-            </nav>
+    <div id="app-container" class="container mx-auto px-4 md:px-8 max-w-7xl">
+        <!-- Main Content Area -->
+        <main class="space-y-12">
             
-            <div id="active-tool-container" class="p-6 md:p-8 min-h-[60vh]">
-                <!-- Active tool content will be injected here -->
+            <!-- PDF Tools Section -->
+            <section id="pdf-tools-section">
+                <h2 class="text-2xl font-bold mb-4">PDF Tools</h2>
+                <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-lg">
+                    <div class="relative">
+                        <button class="scroll-btn absolute top-1/2 left-2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-md hover:bg-white dark:hover:bg-gray-700 transition hidden">
+                            <svg class="w-5 h-5 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <nav class="tabs-container flex">
+                            <a href="#" class="tab-link" data-tool="pdf-editor"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>PDF Editor<span class="pro-badge-inline">Pro</span></a>
+                            <a href="#" class="tab-link" data-tool="jpg-to-pdf"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" /></svg>JPG to PDF</a>
+                            <a href="#" class="tab-link" data-tool="images-to-pdf"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" /></svg>Images to PDF</a>
+                            <a href="#" class="tab-link" data-tool="pdf-to-jpg"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 17.25v3.375c0 .621.504 1.125 1.125 1.125h9.75a1.125 1.125 0 001.125-1.125V7.875c0-.621-.504-1.125-1.125-1.125H14.25M8.25 17.25L5.1 14.1a1.125 1.125 0 010-1.59l3.15-3.15m-3.15 4.74h12m0-12v.003c0 .621-.504 1.125-1.125 1.125H4.125A1.125 1.125 0 013 4.128V4.125m12 0c0-.621-.504-1.125-1.125-1.125H4.125A1.125 1.125 0 003 4.125v.003m12 0h-9m9 0c.621 0 1.125.504 1.125 1.125v.003" /></svg>PDF to JPG</a>
+                            <a href="#" class="tab-link" data-tool="combine-to-pdf"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /><path stroke-linecap="round" stroke-linejoin="round" d="M9 2.25h.008v.008H9V2.25zM13.5 2.25h.008v.008h-.008V2.25zM9 21.75h.008v.008H9v-.008zM13.5 21.75h.008v.008h-.008v-.008zM2.25 9v.008h.008V9H2.25zm.008 5.5V13.5h-.008v.008h.008zm19.5-.008v-.008h-.008V14.5h.008zm0-5.5V9h-.008v.008h.008z" /></svg>Merge to PDF</a>
+                            <a href="#" class="tab-link" data-tool="compress-pdf"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" /></svg>Compress PDF<span class="pro-badge-inline">Pro</span></a>
+                        </nav>
+                        <button class="scroll-btn absolute top-1/2 right-2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-md hover:bg-white dark:hover:bg-gray-700 transition hidden">
+                            <svg class="w-5 h-5 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Image Tools Section -->
+            <section id="image-tools-section">
+                <h2 class="text-2xl font-bold mb-4">Image Tools</h2>
+                <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-lg">
+                    <div class="relative">
+                        <button class="scroll-btn absolute top-1/2 left-2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-md hover:bg-white dark:hover:bg-gray-700 transition hidden">
+                            <svg class="w-5 h-5 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <nav class="tabs-container flex">
+                            <a href="#" class="tab-link" data-tool="compress-jpg"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" /></svg>Compress JPG<span class="pro-badge-inline">Pro</span></a>
+                            <a href="#" class="tab-link" data-tool="resize-image"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg>Resize Image</a>
+                            <a href="#" class="tab-link" data-tool="crop-image"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 3.75H6A2.25 2.25 0 003.75 6v1.5M16.5 3.75H18A2.25 2.25 0 0120.25 6v1.5m0 9V18A2.25 2.25 0 0118 20.25h-1.5m-9 0H6A2.25 2.25 0 013.75 18v-1.5M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>Crop Image</a>
+                            <a href="#" class="tab-link" data-tool="merge-images"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>Merge Images</a>
+                            <a href="#" class="tab-link" data-tool="convert-image" data-target-format="png"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.667 0l3.181-3.183m-4.991-2.691L7.985 5.944m11.667 0L7.985 17.308" /></svg>JPG to PNG</a>
+                            <a href="#" class="tab-link" data-tool="convert-image" data-target-format="jpeg"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.667 0l3.181-3.183m-4.991-2.691L7.985 5.944m11.667 0L7.985 17.308" /></svg>PNG to JPG</a>
+                        </nav>
+                        <button class="scroll-btn absolute top-1/2 right-2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-md hover:bg-white dark:hover:bg-gray-700 transition hidden">
+                            <svg class="w-5 h-5 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+             <!-- Active Tool Area -->
+            <div id="active-tool-area" class="bg-[var(--bg-secondary)] rounded-2xl shadow-lg p-6 md:p-8 min-h-[60vh] hidden">
+                 <!-- Active tool content will be injected here -->
             </div>
+
+             <!-- Other Tools Section -->
+             <section id="other-tools-section">
+                <h2 class="text-2xl font-bold mb-4">Other Tools</h2>
+                <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-lg p-6 text-center">
+                    <p class="text-[var(--text-secondary)]">More tools coming soon!</p>
+                </div>
+             </section>
+
         </main>
         
         <!-- Footer -->
         <footer class="text-center mt-8 text-[var(--text-secondary)] text-sm space-y-2">
-             <p>Made With love By Ainul islam - <a href="https://Ainulislam.info" target="_blank" rel="noopener noreferrer" class="font-semibold text-[var(--accent-color)] hover:underline">(ainulislam.info)</a></p>
+             <p class="inline-flex items-center">Made With <svg class="w-5 h-5 mx-1 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" /></svg> By <a href="https://Ainulislam.info" target="_blank" rel="noopener noreferrer" class="font-semibold text-[var(--accent-color)] hover:underline ml-1">Ainul islam</a></p>
         </footer>
 
         <!-- Loading Spinner -->
@@ -210,6 +276,18 @@
                 <p id="loader-text" class="text-[var(--text-primary)] text-lg font-semibold mt-4 mb-2">Processing...</p>
                 <div class="progress-bar w-full">
                     <div class="progress-bar-inner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Modal -->
+        <div id="confirmation-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+            <div class="bg-[var(--bg-secondary)] p-6 rounded-lg shadow-xl text-center max-w-sm">
+                <h3 class="text-lg font-bold text-[var(--text-primary)]">Are you sure?</h3>
+                <p class="text-[var(--text-secondary)] my-4">This will clear saved app settings (like your theme) and reload the page.</p>
+                <div class="flex justify-center gap-4">
+                    <button id="confirm-clear-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-semibold">Yes, Clear Data</button>
+                    <button id="cancel-clear-btn" class="px-4 py-2 bg-[var(--border-color)] text-[var(--text-primary)] rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold">Cancel</button>
                 </div>
             </div>
         </div>
@@ -239,6 +317,7 @@
     </template>
 
     <!-- Templates for each tool -->
+    <template id="template-pdf-editor"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4 text-[var(--text-primary)]">PDF Editor (Pro)</h2><p class="mb-4 text-[var(--text-secondary)]">Upload a PDF to start. Then, add more files, delete pages, and rearrange them before combining.</p><div class="drop-zone-container"></div><div class="my-4 flex flex-wrap gap-4 items-center"><button id="addFilesBtn" class="action-btn flex-1 min-w-[150px]">Add More Files</button><button id="combineAllBtn" class="action-btn flex-1 min-w-[150px] bg-green-600 hover:bg-green-700">Combine & Download PDF</button><div class="flex items-center gap-2 ml-auto"><button id="undo-btn" title="Undo" class="global-nav-btn p-2 rounded-full hover:bg-[var(--border-color)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"><svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg></button><button id="redo-btn" title="Redo" class="global-nav-btn p-2 rounded-full hover:bg-[var(--border-color)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"><svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6m0 0l6-6m-6 6h12a6 6 0 000-12h-3" /></svg></button></div></div><div id="pdf-editor-preview-list" class="output-area mt-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4"></div><div id="pdf-editor-output" class="output-area mt-4"></div><div class="external-tools-container"></div><div class="suggestions-container"><h3 class="text-lg font-semibold mb-3 text-center text-[var(--text-secondary)]">You might also like...</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><a href="#" class="suggestion-card" data-tool="compress-pdf"><h4 class="font-bold text-[var(--text-primary)]">Compress PDF</h4><p class="text-sm text-[var(--text-secondary)]">Reduce final file size.</p></a><a href="#" class="suggestion-card" data-tool="pdf-to-jpg"><h4 class="font-bold text-[var(--text-primary)]">PDF to JPG</h4><p class="text-sm text-[var(--text-secondary)]">Extract all pages.</p></a><a href="#" class="suggestion-card" data-tool="images-to-pdf"><h4 class="font-bold text-[var(--text-primary)]">Images to PDF</h4><p class="text-sm text-[var(--text-secondary)]">Combine only images.</p></a></div></div></div></template>
     <template id="template-jpg-to-pdf"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4 text-[var(--text-primary)]">JPG to PDF Converter</h2><p class="mb-4 text-[var(--text-secondary)]">Drop a JPG image to convert it into a PDF document.</p><div class="drop-zone-container"></div><button id="convertToPdfBtn" class="action-btn">Convert to PDF</button><div id="jpg-to-pdf-output" class="output-area"></div><div class="external-tools-container"></div><div class="suggestions-container"><h3 class="text-lg font-semibold mb-3 text-center text-[var(--text-secondary)]">You might also like...</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><a href="#" class="suggestion-card" data-tool="images-to-pdf"><h4 class="font-bold text-[var(--text-primary)]">Images to PDF</h4><p class="text-sm text-[var(--text-secondary)]">Combine multiple images.</p></a><a href="#" class="suggestion-card" data-tool="compress-pdf"><h4 class="font-bold text-[var(--text-primary)]">Compress PDF</h4><p class="text-sm text-[var(--text-secondary)]">Reduce PDF file size.</p></a><a href="#" class="suggestion-card" data-tool="convert-image" data-target-format="jpeg"><h4 class="font-bold text-[var(--text-primary)]">PNG to JPG</h4><p class="text-sm text-[var(--text-secondary)]">Convert image formats.</p></a></div></div></div></template>
     <template id="template-pdf-to-jpg"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4 text-[var(--text-primary)]">PDF to JPG Converter</h2><p class="mb-4 text-[var(--text-secondary)]">Drop a PDF file to convert its pages into JPG images directly in your browser.</p><div class="drop-zone-container"></div><button id="convertToJpgBtn" class="action-btn">Convert to JPG</button><div id="pdf-to-jpg-output" class="output-area grid grid-cols-2 md:grid-cols-4 gap-4"></div><div class="external-tools-container"></div><div class="suggestions-container"><h3 class="text-lg font-semibold mb-3 text-center text-[var(--text-secondary)]">You might also like...</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><a href="#" class="suggestion-card" data-tool="combine-to-pdf"><h4 class="font-bold text-[var(--text-primary)]">Merge to PDF</h4><p class="text-sm text-[var(--text-secondary)]">Merge multiple files to PDF.</p></a><a href="#" class="suggestion-card" data-tool="compress-jpg"><h4 class="font-bold text-[var(--text-primary)]">Compress JPG</h4><p class="text-sm text-[var(--text-secondary)]">Shrink image file sizes.</p></a><a href="#" class="suggestion-card" data-tool="crop-image"><h4 class="font-bold text-[var(--text-primary)]">Image Cropper</h4><p class="text-sm text-[var(--text-secondary)]">Crop your new images.</p></a></div></div></div></template>
     <template id="template-merge-images"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4">Merge Images</h2><p class="mb-4 text-[var(--text-secondary)]">Drop two images to merge them vertically or horizontally.</p><div class="grid md:grid-cols-2 gap-4"><div class="drop-zone-container" data-input-id="img1"></div><div class="drop-zone-container" data-input-id="img2"></div></div><div class="flex items-center gap-4 my-4"><label class="font-medium">Merge Direction:</label><select id="mergeDirection" class="p-2 border rounded-md bg-[var(--bg-primary)] border-[var(--border-color)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)]"><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option></select></div><button id="mergeBtn" class="action-btn">Merge Images</button><div id="merge-output" class="output-area"></div><div class="external-tools-container"></div><div class="suggestions-container"><h3 class="text-lg font-semibold mb-3 text-center text-[var(--text-secondary)]">You might also like...</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><a href="#" class="suggestion-card" data-tool="crop-image"><h4 class="font-bold text-[var(--text-primary)]">Image Cropper</h4><p class="text-sm text-[var(--text-secondary)]">Crop images before merging.</p></a><a href="#" class="suggestion-card" data-tool="resize-image"><h4 class="font-bold text-[var(--text-primary)]">Image Resizer</h4><p class="text-sm text-[var(--text-secondary)]">Resize images to match.</p></a><a href="#" class="suggestion-card" data-tool="images-to-pdf"><h4 class="font-bold text-[var(--text-primary)]">Images to PDF</h4><p class="text-sm text-[var(--text-secondary)]">Save result to a PDF.</p></a></div></div></div></template>
@@ -264,14 +343,13 @@
             const lightIcon = document.getElementById('theme-icon-light');
             const darkIcon = document.getElementById('theme-icon-dark');
             const html = document.documentElement;
-
-            const tabsNavigation = document.getElementById('tabs-navigation');
-            const activeToolContainer = document.getElementById('active-tool-container');
+            
+            const activeToolArea = document.getElementById('active-tool-area');
             const loader = document.getElementById('loader');
             
             let cropper = null;
             let originalImageRatio = 1;
-            let filesStore = new Map(); // Use a Map to store files for each tool/input
+            let filesStore = new Map();
 
             // Theme switching logic
             const applyTheme = (isDark) => {
@@ -293,8 +371,9 @@
             
             // --- TAB-BASED NAVIGATION LOGIC ---
             const switchTool = (toolId, dataset = {}) => {
-                filesStore.clear(); // Clear stored files when switching tools
-                tabsNavigation.querySelectorAll('.tab-link').forEach(tab => {
+                filesStore.clear(); 
+                
+                document.querySelectorAll('.tabs-container .tab-link').forEach(tab => {
                     const isTargetTool = tab.dataset.tool === toolId;
                     const isTargetFormat = !dataset.targetFormat || tab.dataset.targetFormat === dataset.targetFormat;
                     
@@ -305,29 +384,100 @@
                     }
                 });
 
+                activeToolArea.classList.remove('hidden');
+                document.querySelectorAll('section[id$="-tools-section"]').forEach(s => s.classList.add('hidden'));
+
                 const template = document.getElementById(`template-${toolId}`);
                 if (template) {
                     if(cropper) { cropper.destroy(); cropper = null; }
                     
                     const toolContent = template.content.cloneNode(true);
-                    activeToolContainer.innerHTML = ''; 
-                    activeToolContainer.appendChild(toolContent);
+                    activeToolArea.innerHTML = ''; 
+                    activeToolArea.appendChild(toolContent);
                     
                     addToolEventListeners(toolId);
                     
                     if (toolId === 'convert-image' && dataset.targetFormat) {
-                        const select = activeToolContainer.querySelector('#convertFormat');
+                        const select = activeToolArea.querySelector('#convertFormat');
                         if (select) select.value = dataset.targetFormat;
+                    }
+
+                    const activeTab = document.querySelector(`.tab-link.active`);
+                    if (activeTab) {
+                        activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                     }
                 }
             };
+            
+            // --- GLOBAL NAVIGATION ---
+            const homeBtn = document.getElementById('home-btn');
+            const backBtn = document.getElementById('back-btn');
+            const refreshBtn = document.getElementById('refresh-btn');
+            const clearCacheBtn = document.getElementById('clear-cache-btn');
+            const confirmationModal = document.getElementById('confirmation-modal');
 
-            tabsNavigation.addEventListener('click', (e) => {
-                e.preventDefault();
-                const tab = e.target.closest('.tab-link');
-                if (tab) {
-                    switchTool(tab.dataset.tool, tab.dataset);
+            function goHome() {
+                activeToolArea.classList.add('hidden');
+                activeToolArea.innerHTML = '';
+                document.querySelectorAll('section[id$="-tools-section"]').forEach(s => s.classList.remove('hidden'));
+                document.querySelectorAll('.tab-link.active').forEach(t => t.classList.remove('active'));
+            }
+
+            homeBtn.addEventListener('click', goHome);
+            backBtn.addEventListener('click', goHome);
+            refreshBtn.addEventListener('click', () => location.reload(true));
+            clearCacheBtn.addEventListener('click', () => confirmationModal.classList.remove('hidden'));
+            
+            confirmationModal.querySelector('#cancel-clear-btn').addEventListener('click', () => confirmationModal.classList.add('hidden'));
+            confirmationModal.querySelector('#confirm-clear-btn').addEventListener('click', () => {
+                localStorage.clear();
+                location.reload(true);
+            });
+
+
+            document.querySelectorAll('.tabs-container').forEach(tabsNav => {
+                tabsNav.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const tab = e.target.closest('.tab-link');
+                    if (tab) {
+                        switchTool(tab.dataset.tool, tab.dataset);
+                    }
+                });
+            });
+
+            // --- TAB SCROLLING LOGIC ---
+            const SCROLL_AMOUNT = 200;
+
+            document.querySelectorAll('section[id$="-tools-section"]').forEach(section => {
+                const tabsContainer = section.querySelector('.tabs-container');
+                const scrollLeftBtn = section.querySelector('.scroll-btn:first-of-type');
+                const scrollRightBtn = section.querySelector('.scroll-btn:last-of-type');
+
+                function checkTabsOverflow() {
+                    if (!tabsContainer) return;
+                    const isOverflowing = tabsContainer.scrollWidth > tabsContainer.clientWidth;
+                    if (isOverflowing) {
+                        scrollLeftBtn.classList.remove('hidden');
+                        scrollRightBtn.classList.remove('hidden');
+                        scrollLeftBtn.disabled = tabsContainer.scrollLeft <= 0;
+                        scrollRightBtn.disabled = tabsContainer.scrollLeft >= (tabsContainer.scrollWidth - tabsContainer.clientWidth - 1);
+                    } else {
+                        scrollLeftBtn.classList.add('hidden');
+                        scrollRightBtn.classList.add('hidden');
+                    }
                 }
+
+                scrollLeftBtn.addEventListener('click', () => {
+                    tabsContainer.scrollBy({ left: -SCROLL_AMOUNT, behavior: 'smooth' });
+                });
+
+                scrollRightBtn.addEventListener('click', () => {
+                    tabsContainer.scrollBy({ left: SCROLL_AMOUNT, behavior: 'smooth' });
+                });
+
+                tabsContainer.addEventListener('scroll', checkTabsOverflow);
+                window.addEventListener('resize', checkTabsOverflow);
+                checkTabsOverflow(); // Initial check
             });
             
             // --- UTILITY FUNCTIONS ---
@@ -362,6 +512,13 @@
                 reader.readAsDataURL(file);
             });
             
+            const loadImage = (src) => new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = src;
+            });
+
             // --- DRAG AND DROP SETUP ---
             function setupDragAndDrop(container, inputId, isMultiple, acceptedTypes, fileHandler) {
                 const dropZoneTemplate = document.getElementById('template-drop-zone').content.cloneNode(true);
@@ -409,11 +566,11 @@
 
             // --- EVENT LISTENERS ---
             function addToolEventListeners(toolId) {
-                const getEl = (id) => activeToolContainer.querySelector('#' + id);
-                const getDropContainer = (id) => activeToolContainer.querySelector(`.drop-zone-container[data-input-id="${id}"]`) || activeToolContainer.querySelector('.drop-zone-container');
+                const getEl = (id) => activeToolArea.querySelector('#' + id);
+                const getDropContainer = (id) => activeToolArea.querySelector(`.drop-zone-container[data-input-id="${id}"]`) || activeToolArea.querySelector('.drop-zone-container');
                 
                 // Inject external tools link into every tool
-                const externalToolsContainer = activeToolContainer.querySelector('.external-tools-container');
+                const externalToolsContainer = activeToolArea.querySelector('.external-tools-container');
                 if (externalToolsContainer) {
                     const externalToolsTemplate = document.getElementById('template-external-tools').content.cloneNode(true);
                     externalToolsContainer.appendChild(externalToolsTemplate);
@@ -421,6 +578,13 @@
 
 
                 switch (toolId) {
+                    case 'pdf-editor':
+                        setupDragAndDrop(getDropContainer(), 'initialPdf', false, 'application/pdf', (files) => handlePdfEditorInitialUpload(files[0]));
+                        getEl('addFilesBtn').addEventListener('click', () => document.getElementById('addMoreFilesInput')?.click());
+                        getEl('combineAllBtn').addEventListener('click', handleCombineEditedPdf);
+                        getEl('undo-btn').addEventListener('click', handleUndo);
+                        getEl('redo-btn').addEventListener('click', handleRedo);
+                        break;
                     case 'jpg-to-pdf': 
                         setupDragAndDrop(getDropContainer(), 'jpgFile', false, 'image/jpeg');
                         getEl('convertToPdfBtn').addEventListener('click', handleJpgToPdf); 
@@ -477,7 +641,7 @@
                 }
             }
             
-            activeToolContainer.addEventListener('click', (e) => {
+            activeToolArea.addEventListener('click', (e) => {
                 const suggestionCard = e.target.closest('.suggestion-card');
                 if (suggestionCard) {
                     e.preventDefault();
@@ -489,8 +653,8 @@
             // --- SERVER-SIDE TOOL IMPLEMENTATIONS ---
             async function handleCompressJpg() {
                 const file = filesStore.get("compressJpgFile");
-                const quality = parseInt(activeToolContainer.querySelector("#qualitySlider").value, 10);
-                const outputDiv = activeToolContainer.querySelector("#compress-jpg-output");
+                const quality = parseInt(activeToolArea.querySelector("#qualitySlider").value, 10);
+                const outputDiv = activeToolArea.querySelector("#compress-jpg-output");
                 if (!file) { return void alert("Please select a JPG file."); }
                 showLoader(true, "Uploading file...");
                 try {
@@ -516,7 +680,7 @@
 
             async function handleCompressPdf() {
                 const file = filesStore.get("compressPdfFile");
-                const outputDiv = activeToolContainer.querySelector("#compress-pdf-output");
+                const outputDiv = activeToolArea.querySelector("#compress-pdf-output");
                 if (!file) { return void alert("Please select a PDF file."); }
                 showLoader(true, "Uploading file...");
                 try {
@@ -541,9 +705,242 @@
             }
             
             // --- CLIENT-SIDE TOOL IMPLEMENTATIONS ---
+            
+            // --- NEW PDF EDITOR ---
+            let pdfEditorHistory = [];
+            let pdfEditorRedoStack = [];
+            let pdfEditorPages = [];
+            const sourceFileCache = new Map();
+
+            function savePdfEditorState() {
+                const currentState = pdfEditorPages.map(p => ({...p}));
+                pdfEditorHistory.push(currentState);
+                pdfEditorRedoStack = []; 
+                updateUndoRedoState();
+            }
+
+            function updateUndoRedoState() {
+                const undoBtn = activeToolArea.querySelector('#undo-btn');
+                const redoBtn = activeToolArea.querySelector('#redo-btn');
+                if (undoBtn) undoBtn.disabled = pdfEditorHistory.length <= 1;
+                if (redoBtn) redoBtn.disabled = pdfEditorRedoStack.length === 0;
+            }
+
+            function handleUndo() {
+                if (pdfEditorHistory.length <= 1) return;
+                const currentState = pdfEditorHistory.pop();
+                pdfEditorRedoStack.push(currentState);
+                pdfEditorPages = pdfEditorHistory[pdfEditorHistory.length - 1].map(p => ({...p}));
+                renderPdfEditorPreviews();
+                updateUndoRedoState();
+            }
+
+            function handleRedo() {
+                if(pdfEditorRedoStack.length === 0) return;
+                const nextState = pdfEditorRedoStack.pop();
+                pdfEditorHistory.push(nextState);
+                pdfEditorPages = nextState.map(p => ({...p}));;
+                renderPdfEditorPreviews();
+                updateUndoRedoState();
+            }
+
+            async function getOrLoadPdfSource(file) {
+                if (sourceFileCache.has(file.name)) {
+                    return sourceFileCache.get(file.name);
+                }
+                const fileBytes = await file.arrayBuffer();
+                const pdfDoc = await PDFDocument.load(fileBytes, { ignoreEncryption: true });
+                const pdfjsDoc = await pdfjsLib.getDocument(fileBytes).promise;
+                const sourceData = { pdfDoc, pdfjsDoc };
+                sourceFileCache.set(file.name, sourceData);
+                return sourceData;
+            }
+
+            async function handlePdfEditorInitialUpload(file) {
+                if (!file) return;
+                showLoader(true, 'Reading initial PDF...');
+                pdfEditorPages = [];
+                pdfEditorHistory = [[]];
+                pdfEditorRedoStack = [];
+                sourceFileCache.clear();
+                
+                try {
+                    const { pdfDoc } = await getOrLoadPdfSource(file);
+                    for (let i = 0; i < pdfDoc.getPageCount(); i++) {
+                        pdfEditorPages.push({ type: 'pdf-page', sourceName: file.name, pageIndex: i, id: Math.random() });
+                    }
+                    savePdfEditorState();
+                    await renderPdfEditorPreviews();
+                } catch(e) {
+                    alert('Could not read the initial PDF file. It may be corrupt or protected.');
+                    console.error(e);
+                } finally {
+                    showLoader(false);
+                }
+
+                let addMoreInput = document.getElementById('addMoreFilesInput');
+                if(!addMoreInput) {
+                    addMoreInput = document.createElement('input');
+                    addMoreInput.type = 'file';
+                    addMoreInput.id = 'addMoreFilesInput';
+                    addMoreInput.multiple = true;
+                    addMoreInput.accept = 'application/pdf,image/jpeg,image/png';
+                    addMoreInput.className = 'hidden';
+                    activeToolArea.appendChild(addMoreInput);
+                    addMoreInput.addEventListener('change', handleAddMoreFilesToEditor);
+                }
+            }
+
+            async function handleAddMoreFilesToEditor(event) {
+                const newFiles = Array.from(event.target.files);
+                if (newFiles.length === 0) return;
+                showLoader(true, 'Adding new files...');
+                try {
+                    for (const file of newFiles) {
+                        if (file.type === 'application/pdf') {
+                            const { pdfDoc } = await getOrLoadPdfSource(file);
+                            for (let i = 0; i < pdfDoc.getPageCount(); i++) {
+                                 pdfEditorPages.push({ type: 'pdf-page', sourceName: file.name, pageIndex: i, id: Math.random() });
+                            }
+                        } else if (file.type.startsWith('image/')) {
+                            sourceFileCache.set(file.name, { file }); // Store the raw file for images
+                            pdfEditorPages.push({ type: 'image', sourceName: file.name, id: Math.random() });
+                        }
+                    }
+                    savePdfEditorState();
+                    await renderPdfEditorPreviews();
+                } catch (e) {
+                     alert('Could not read one of the added files. It may be corrupt or protected.');
+                    console.error(e);
+                } finally {
+                    event.target.value = ''; // Reset file input
+                    showLoader(false);
+                }
+            }
+
+            async function renderPdfEditorPreviews() {
+                const previewList = activeToolArea.querySelector("#pdf-editor-preview-list");
+                if (!previewList) return;
+                previewList.innerHTML = '';
+                
+                for (let i = 0; i < pdfEditorPages.length; i++) {
+                    const pageData = pdfEditorPages[i];
+                    const div = document.createElement('div');
+                    div.className = "relative p-1 border border-[var(--border-color)] rounded-lg shadow-sm cursor-move bg-[var(--bg-secondary)]";
+                    div.draggable = true;
+                    div.dataset.id = pageData.id;
+
+                    const contentWrapper = document.createElement('div');
+                    contentWrapper.className = 'w-full h-32 flex items-center justify-center overflow-hidden';
+                    
+                    if (pageData.type === 'pdf-page') {
+                        const canvas = document.createElement('canvas');
+                        canvas.className = "max-w-full max-h-full object-contain";
+                        contentWrapper.appendChild(canvas);
+                        
+                         const source = sourceFileCache.get(pageData.sourceName);
+                         if(source && source.pdfjsDoc) {
+                             const pdfjsPage = await source.pdfjsDoc.getPage(pageData.pageIndex + 1);
+                             const viewport = pdfjsPage.getViewport({ scale: 0.3 });
+                             const context = canvas.getContext('2d');
+                             canvas.height = viewport.height;
+                             canvas.width = viewport.width;
+                             await pdfjsPage.render({ canvasContext: context, viewport: viewport }).promise;
+                         }
+
+                    } else if (pageData.type === 'image') {
+                        const img = document.createElement('img');
+                        img.className = 'max-w-full max-h-full object-contain';
+                        const source = sourceFileCache.get(pageData.sourceName);
+                        if (source && source.file) {
+                           img.src = URL.createObjectURL(source.file);
+                        }
+                        contentWrapper.appendChild(img);
+                    }
+                    
+                    const pageNumber = document.createElement('span');
+                    pageNumber.className = 'absolute bottom-1 left-2 text-xs font-bold text-white bg-black/50 rounded-full px-1.5 py-0.5';
+                    pageNumber.textContent = i + 1;
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'absolute top-1 right-1 text-white bg-red-500/80 hover:bg-red-600 rounded-full w-5 h-5 flex items-center justify-center';
+                    deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>';
+                    deleteBtn.onclick = () => {
+                        pdfEditorPages = pdfEditorPages.filter(p => p.id !== pageData.id);
+                        savePdfEditorState();
+                        renderPdfEditorPreviews();
+                    };
+
+                    div.appendChild(contentWrapper);
+                    div.appendChild(pageNumber);
+                    div.appendChild(deleteBtn);
+                    previewList.appendChild(div);
+                }
+                 updateUndoRedoState();
+                let draggedItem = null;
+                 if (!previewList.dataset.dragInitialized) {
+                    previewList.dataset.dragInitialized = "true";
+                    previewList.addEventListener("dragstart", e => { draggedItem = e.target.closest("div[draggable]") });
+                    previewList.addEventListener("dragover", e => {
+                        e.preventDefault();
+                        const target = e.target.closest("div[draggable]");
+                        if (target && target !== draggedItem) {
+                            const rect = target.getBoundingClientRect();
+                            const next = (e.clientY - rect.top) / rect.height > .5;
+                            previewList.insertBefore(draggedItem, next && target.nextSibling || target);
+                        }
+                    });
+                    previewList.addEventListener("drop", (() => {
+                        if (!draggedItem) return;
+                        const newOrderElements = [...previewList.children];
+                        const newPageOrder = newOrderElements.map(el => pdfEditorPages.find(p => p.id == el.dataset.id));
+                        pdfEditorPages = newPageOrder;
+                        savePdfEditorState();
+                        renderPdfEditorPreviews();
+                        draggedItem = null;
+                    }));
+                }
+            }
+            
+            async function handleCombineEditedPdf() {
+                if (pdfEditorPages.length === 0) return alert('No pages to combine.');
+                showLoader(true, 'Preparing files for server...');
+                 try {
+                    const pageInstructions = pdfEditorPages.map(p => ({ type: p.type, sourceName: p.sourceName, pageIndex: p.pageIndex }));
+                    
+                    const sources = {};
+                    for(const [name, data] of sourceFileCache.entries()) {
+                        const file = data.file || (await getOrLoadPdfSource(data.pdfDoc)).pdfjsDoc.getData();
+                        sources[name] = await fileToDataUrl(file instanceof File ? file : new File([file], name));
+                    }
+
+                    showLoader(true, 'Building PDF on server...');
+                    const response = await fetch('/.netlify/functions/edit-pdf', {
+                        method: 'POST',
+                        body: JSON.stringify({ pages: pageInstructions, sources })
+                    });
+
+                    if (!response.ok) {
+                        const err = await response.json();
+                        throw new Error(err.error || "Server error");
+                    }
+                    
+                    const { pdf: finalPdfB64 } = await response.json();
+                    const blob = new Blob([Uint8Array.from(atob(finalPdfB64), c => c.charCodeAt(0))], { type: "application/pdf" });
+                    const outputEl = activeToolArea.querySelector("#pdf-editor-output");
+                    createDownloadLink(URL.createObjectURL(blob), "edited.pdf", "Download Edited PDF", outputEl);
+                } catch(error) {
+                    console.error('Failed to combine edited PDF', error);
+                    alert('An error occurred during the server-side PDF creation.');
+                } finally {
+                    showLoader(false);
+                }
+            }
+
+
             async function handlePdfToJpg() {
                 const file = filesStore.get("pdfFile");
-                const outputDiv = activeToolContainer.querySelector("#pdf-to-jpg-output");
+                const outputDiv = activeToolArea.querySelector("#pdf-to-jpg-output");
                 if (!file) {
                     alert('Please select a PDF file.');
                     return;
@@ -608,9 +1005,9 @@
                     }
                     const mergedPdfBytes = await mergedPdf.save();
                     const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
-                    const outputEl = activeToolContainer.querySelector("#combine-to-pdf-output");
+                    const outputEl = activeToolArea.querySelector("#combine-to-pdf-output");
                     createDownloadLink(URL.createObjectURL(blob), "combined.pdf", "Download Combined PDF", outputEl);
-                    activeToolContainer.querySelector("#file-preview-list").innerHTML = "";
+                    activeToolArea.querySelector("#file-preview-list").innerHTML = "";
                     filesStore.delete('multipleFiles');
                 } catch (error) {
                     console.error(error);
@@ -619,7 +1016,7 @@
             }
 
             async function handleFilePreviews(files) {
-                const previewList = activeToolContainer.querySelector("#file-preview-list");
+                const previewList = activeToolArea.querySelector("#file-preview-list");
                 previewList.innerHTML = "";
                 let fileArray = Array.from(files);
                 filesStore.set('multipleFiles', fileArray);
@@ -706,15 +1103,15 @@
                 page.drawImage(jpgImage, { x: 0, y: 0, width: jpgImage.width, height: jpgImage.height });
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: "application/pdf" });
-                createDownloadLink(URL.createObjectURL(blob), "converted.pdf", "Download PDF", activeToolContainer.querySelector("#jpg-to-pdf-output"));
+                createDownloadLink(URL.createObjectURL(blob), "converted.pdf", "Download PDF", activeToolArea.querySelector("#jpg-to-pdf-output"));
                 showLoader(false);
             }
 
             async function handleMergeImages() {
                 const file1 = filesStore.get("img1");
                 const file2 = filesStore.get("img2");
-                const direction = activeToolContainer.querySelector("#mergeDirection").value;
-                const outputDiv = activeToolContainer.querySelector("#merge-output");
+                const direction = activeToolArea.querySelector("#mergeDirection").value;
+                const outputDiv = activeToolArea.querySelector("#merge-output");
                 if (!file1 || !file2) { return void alert("Please select two images."); }
                 showLoader(true);
                 const [img1, img2] = await Promise.all([
@@ -742,8 +1139,8 @@
 
             async function handleConvertImage() {
                 const file = filesStore.get("convertFile");
-                const format = activeToolContainer.querySelector("#convertFormat").value;
-                const outputDiv = activeToolContainer.querySelector("#convert-output");
+                const format = activeToolArea.querySelector("#convertFormat").value;
+                const outputDiv = activeToolArea.querySelector("#convert-output");
                 if (!file) { return void alert("Please select an image file."); }
                 showLoader(true);
                 const image = await loadImage(URL.createObjectURL(file));
@@ -762,7 +1159,7 @@
             }
 
             function handleImagePreviews(files) {
-                const previewList = activeToolContainer.querySelector("#image-preview-list");
+                const previewList = activeToolArea.querySelector("#image-preview-list");
                 previewList.innerHTML = "";
                 let imageFilesOrder = Array.from(files); 
                 filesStore.set('multipleImages', imageFilesOrder);
@@ -820,7 +1217,7 @@
                     page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height })
                 }
                 const pdfBytes = await pdfDoc.save();
-                createDownloadLink(URL.createObjectURL(new Blob([pdfBytes], { type: "application/pdf" })), "combined_images.pdf", "Download Combined PDF", activeToolContainer.querySelector("#image-preview-list"));
+                createDownloadLink(URL.createObjectURL(new Blob([pdfBytes], { type: "application/pdf" })), "combined_images.pdf", "Download Combined PDF", activeToolArea.querySelector("#image-preview-list"));
                 showLoader(false);
             }
 
@@ -829,12 +1226,12 @@
                 if (files && files.length > 0) {
                     const reader = new FileReader;
                     reader.onload = (e => {
-                        const imageElement = activeToolContainer.querySelector("#imageToCrop");
+                        const imageElement = activeToolArea.querySelector("#imageToCrop");
                         imageElement.src = e.target.result;
                         if (cropper) {
                             cropper.replace(e.target.result);
                         } else {
-                            cropper = new Cropper(imageElement, { aspectRatio: 1, viewMode: 1, preview: activeToolContainer.querySelector("#crop-preview") })
+                            cropper = new Cropper(imageElement, { aspectRatio: 1, viewMode: 1, preview: activeToolArea.querySelector("#crop-preview") })
                         }
                     });
                     reader.readAsDataURL(files[0]);
@@ -854,9 +1251,9 @@
             }
 
             function handleAspectRatio(changedInput) {
-                const widthInput = activeToolContainer.querySelector("#newWidth");
-                const heightInput = activeToolContainer.querySelector("#newHeight");
-                if (activeToolContainer.querySelector("#aspectRatio").checked) {
+                const widthInput = activeToolArea.querySelector("#newWidth");
+                const heightInput = activeToolArea.querySelector("#newHeight");
+                if (activeToolArea.querySelector("#aspectRatio").checked) {
                     if ("width" === changedInput) {
                         heightInput.value = Math.round(parseInt(widthInput.value, 10) / originalImageRatio);
                     } else {
@@ -867,9 +1264,9 @@
 
             async function handleResizeImage() {
                 const file = filesStore.get("resizeFile");
-                const newWidth = parseInt(activeToolContainer.querySelector("#newWidth").value);
-                const newHeight = parseInt(activeToolContainer.querySelector("#newHeight").value);
-                const outputDiv = activeToolContainer.querySelector("#resize-output");
+                const newWidth = parseInt(activeToolArea.querySelector("#newWidth").value);
+                const newHeight = parseInt(activeToolArea.querySelector("#newHeight").value);
+                const outputDiv = activeToolArea.querySelector("#resize-output");
                 if (!file) { return void alert("Please select an image file."); }
                 if (isNaN(newWidth) || isNaN(newHeight) || newWidth <= 0 || newHeight <= 0) { return void alert("Please enter valid width and height."); }
                 showLoader(true);
@@ -885,7 +1282,7 @@
             }
 
             // --- INITIALIZATION ---
-            switchTool('jpg-to-pdf'); // Load the default tool on start
+             goHome(); // Show categories on load
 
             // Apply common styles dynamically
             const style = document.createElement('style');
