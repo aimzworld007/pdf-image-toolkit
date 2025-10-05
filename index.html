@@ -259,6 +259,11 @@
                 document.getElementById('loader-text').textContent = text;
                 loader.style.display = show ? 'flex' : 'none'; 
             };
+
+            const generateRandomFilename = (base, extension) => {
+                const randomNumber = Math.floor(1000 + Math.random() * 9000);
+                return `${base}_${randomNumber}.${extension}`;
+            };
             
             const createDownloadLink = (href, download, text, targetElement) => {
                 targetElement.innerHTML = ''; 
@@ -407,7 +412,7 @@
                     page.drawImage(jpgImage, { x: 0, y: 0, width: jpgImage.width, height: jpgImage.height });
                     const pdfBytes = await pdfDoc.save();
                     const blob = new Blob([pdfBytes], { type: "application/pdf" });
-                    createDownloadLink(URL.createObjectURL(blob), 'converted.pdf', 'Download PDF', activeToolArea.querySelector('.output-area'));
+                    createDownloadLink(URL.createObjectURL(blob), generateRandomFilename('converted', 'pdf'), 'Download PDF', activeToolArea.querySelector('.output-area'));
                 } catch(e) {
                     activeToolArea.querySelector('.output-area').innerHTML = `<p class="text-red-500">Error processing JPG.</p>`;
                 } finally {
@@ -436,7 +441,7 @@
                             await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
                             const a = document.createElement('a');
                             a.href = canvas.toDataURL('image/jpeg');
-                            a.download = `page_${i}.jpg`;
+                            a.download = generateRandomFilename(`page_${i}`, 'jpg');
                             a.innerHTML = `<img src="${a.href}" class="w-full h-auto object-cover rounded-lg shadow-md border border-[var(--border-color)]">`;
                             outputDiv.appendChild(a);
                         }
@@ -448,40 +453,7 @@
                 };
                 fileReader.readAsArrayBuffer(file);
             }
-
-            async function handleCombinePdfs() {
-                const files = filesStore.get('files');
-                if (!files || files.length < 1) return alert('Please select at least one PDF file.');
-                showLoader(true, 'Combining PDFs...');
-                const outputArea = activeToolArea.querySelector('.output-area');
-                outputArea.innerHTML = '';
-                try {
-                    const mergedPdf = await PDFDocument.create();
-                    for (const file of files) {
-                        try {
-                            const pdfBytes = await file.arrayBuffer();
-                            const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-                            const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
-                            copiedPages.forEach(page => mergedPdf.addPage(page));
-                        } catch (e) {
-                            console.warn(`Skipping corrupted or protected file: ${file.name}`);
-                            continue;
-                        }
-                    }
-                    if (mergedPdf.getPageCount() === 0) {
-                        throw new Error("No valid pages could be added to the PDF.");
-                    }
-                    const mergedPdfBytes = await mergedPdf.save();
-                    const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
-                    createDownloadLink(URL.createObjectURL(blob), 'combined.pdf', 'Download Combined PDF', outputArea);
-                } catch (e) {
-                    console.error(e);
-                    outputArea.innerHTML = `<p class="text-red-500">An unexpected error occurred while combining PDFs. Please ensure files are valid.</p>`;
-                } finally {
-                    showLoader(false);
-                }
-            }
-
+            
             let combinedFiles = [];
             function handleCombineFilePreviews(files) {
                 const previewList = activeToolArea.querySelector('#combine-preview-list');
@@ -491,10 +463,11 @@
                 addBtn.classList.remove('hidden');
                 combineBtn.classList.remove('hidden');
                 
-                combinedFiles = files;
+                combinedFiles = files; // This now becomes the master list
+                filesStore.set('files', combinedFiles);
                 previewList.innerHTML = '';
 
-                files.forEach((file, index) => {
+                combinedFiles.forEach((file, index) => {
                     const div = document.createElement('div');
                     div.className = 'relative p-1 border border-[var(--border-color)] rounded-lg shadow-sm cursor-move bg-[var(--bg-secondary)]';
                     div.draggable = true;
@@ -515,13 +488,21 @@
                         const reader = new FileReader();
                         reader.onload = async (e) => {
                              const typedarray = new Uint8Array(e.target.result);
-                             const pdfjsDoc = await pdfjsLib.getDocument(typedarray).promise;
-                             const pdfjsPage = await pdfjsDoc.getPage(1);
-                             const viewport = pdfjsPage.getViewport({ scale: 0.3 });
-                             const context = canvas.getContext('2d');
-                             canvas.height = viewport.height;
-                             canvas.width = viewport.width;
-                             await pdfjsPage.render({ canvasContext: context, viewport: viewport }).promise;
+                             try {
+                                const pdfjsDoc = await pdfjsLib.getDocument(typedarray).promise;
+                                const pdfjsPage = await pdfjsDoc.getPage(1);
+                                const viewport = pdfjsPage.getViewport({ scale: 0.3 });
+                                const context = canvas.getContext('2d');
+                                canvas.height = viewport.height;
+                                canvas.width = viewport.width;
+                                await pdfjsPage.render({ canvasContext: context, viewport: viewport }).promise;
+                             } catch (err) {
+                                const ctx = canvas.getContext('2d');
+                                ctx.fillStyle = "var(--text-secondary)";
+                                ctx.textAlign = "center";
+                                ctx.font = "10px Inter";
+                                ctx.fillText("Preview Error", canvas.width / 2, canvas.height / 2);
+                             }
                         };
                         reader.readAsArrayBuffer(file);
                     }
@@ -531,7 +512,7 @@
                     deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>';
                     deleteBtn.onclick = () => {
                         combinedFiles.splice(index, 1);
-                        handleCombineFilePreviews(combinedFiles);
+                        handleCombineFilePreviews(combinedFiles); // Re-render
                     };
 
                     div.appendChild(contentWrapper);
@@ -554,8 +535,7 @@
                     if (!draggedItem) return;
                     const newElements = [...previewList.children];
                     const newFileOrder = newElements.map(el => combinedFiles[parseInt(el.dataset.index)]);
-                    combinedFiles = newFileOrder;
-                    newElements.forEach((el, i) => el.dataset.index = i);
+                    handleCombineFilePreviews(newFileOrder);
                     draggedItem = null;
                 });
             }
@@ -583,7 +563,7 @@
                     }
                     const mergedPdfBytes = await finalPdf.save();
                     const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
-                    createDownloadLink(URL.createObjectURL(blob), "combined_document.pdf", "Download Combined PDF", outputArea);
+                    createDownloadLink(URL.createObjectURL(blob), generateRandomFilename("combined", "pdf"), "Download Combined PDF", outputArea);
                 } catch(e) {
                     console.error(e);
                     outputArea.innerHTML = `<p class="text-red-500">An error occurred. One of the files might be corrupt or unsupported.</p>`;
@@ -598,7 +578,7 @@
                 const previewList = activeToolArea.querySelector('#image-preview-list');
                 previewList.innerHTML = '';
                 imageFilesOrder = files;
-                filesStore.set('files', imageFilesOrder);
+                filesStore.set('files', imageFilesOrder); // Update the store
                 imageFilesOrder.forEach((file, index) => {
                     const reader = new FileReader();
                     reader.onload = e => {
@@ -649,7 +629,7 @@
                         page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
                     }
                     const pdfBytes = await pdfDoc.save();
-                    createDownloadLink(URL.createObjectURL(new Blob([pdfBytes], { type: "application/pdf" })), 'images.pdf', 'Download PDF', outputArea);
+                    createDownloadLink(URL.createObjectURL(new Blob([pdfBytes], { type: "application/pdf" })), generateRandomFilename('images', 'pdf'), 'Download PDF', outputArea);
                 } catch (e) {
                     console.error(e);
                     outputArea.innerHTML = `<p class="text-red-500">Error: Could not process images.</p>`;
@@ -672,7 +652,7 @@
                     canvas.getContext('2d').drawImage(image, 0, 0);
                     const url = canvas.toDataURL('image/jpeg', quality);
                     outputArea.innerHTML = `<p class="text-center mb-4">Original size: ${ (file.size / 1024).toFixed(2) } KB. New size is approximately ${ (url.length * 0.75 / 1024).toFixed(2) } KB.</p>`;
-                    createDownloadLink(url, `compressed.jpg`, `Download Compressed JPG`, outputArea);
+                    createDownloadLink(url, generateRandomFilename('compressed', 'jpg'), `Download Compressed JPG`, outputArea);
                 } catch(e) {
                     outputArea.innerHTML = `<p class="text-red-500">Error processing image.</p>`;
                 } finally {
@@ -695,7 +675,7 @@
                     canvas.height = newHeight;
                     canvas.getContext("2d").drawImage(image, 0, 0, newWidth, newHeight);
                     const url = canvas.toDataURL(file.type);
-                    createDownloadLink(url, `resized.${file.type.split("/")[1]}`, "Download Resized Image", outputDiv);
+                    createDownloadLink(url, generateRandomFilename('resized', file.type.split("/")[1]), "Download Resized Image", outputDiv);
                     outputDiv.insertAdjacentHTML("beforeend", `<img src="${url}" class="max-w-full h-auto mt-4 rounded-lg shadow-md">`);
                 } catch(e) {
                     outputDiv.innerHTML = `<p class="text-red-500">Error resizing image.</p>`;
@@ -731,7 +711,7 @@
                 const outputArea = activeToolArea.querySelector('.output-area');
                 cropper.getCroppedCanvas().toBlob((blob => {
                     const url = URL.createObjectURL(blob);
-                    createDownloadLink(url, "cropped.png", "Download Cropped Image", outputArea);
+                    createDownloadLink(url, generateRandomFilename('cropped', 'png'), "Download Cropped Image", outputArea);
                 }));
             }
 
@@ -758,8 +738,13 @@
                         ctx.drawImage(img2, 0, img1.height);
                     }
                     const url = canvas.toDataURL("image/png");
-                    createDownloadLink(url, "merged.png", "Download Merged Image", outputDiv);
-                    outputDiv.insertAdjacentHTML("beforeend", `<img src="${url}" class="max-w-full h-auto mt-4 rounded-lg shadow-md">`);
+                    outputDiv.innerHTML = `<p class="font-semibold mb-2">Preview:</p><img src="${url}" class="max-w-full h-auto rounded-lg shadow-md border border-[var(--border-color)] mb-4">`;
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = generateRandomFilename("merged", "png");
+                    a.textContent = "Download Merged Image";
+                    a.className = 'download-link';
+                    outputDiv.appendChild(a);
                 } catch(e) {
                      outputDiv.innerHTML = `<p class="text-red-500">Error merging images.</p>`;
                 } finally {
@@ -785,7 +770,7 @@
                     }
                     ctx.drawImage(image, 0, 0);
                     const mimeType = `image/${format}`;
-                    createDownloadLink(canvas.toDataURL(mimeType), `converted.${format}`, `Download as ${format.toUpperCase()}`, outputArea);
+                    createDownloadLink(canvas.toDataURL(mimeType), generateRandomFilename('converted', format), `Download as ${format.toUpperCase()}`, outputArea);
                 } catch(e) {
                      outputArea.innerHTML = `<p class="text-red-500">Error converting image.</p>`;
                 } finally {
