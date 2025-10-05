@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF & Image Toolkit</title>
+    <title>PDF & Image Toolkit By Aimzworld007 </title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- JavaScript Libraries -->
@@ -121,16 +121,27 @@
         <main>
             <!-- Tool Selection Grid (Visible by default) -->
             <div id="tool-selection">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <h2 class="text-2xl font-bold mb-4">Image Tools</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+                    <div class="tool-card rounded-xl" data-tool="merge-images"><div class="p-6"><h3 class="text-xl font-semibold">Merge Images</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Join two images together.</p></div></div>
+                    <div class="tool-card rounded-xl" data-tool="compress-jpg"><div class="p-6"><h3 class="text-xl font-semibold">Compress JPG</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Reduce the file size of a JPG image.</p></div></div>
+                    <div class="tool-card rounded-xl" data-tool="resize-image"><div class="p-6"><h3 class="text-xl font-semibold">Resize Image</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Change the dimensions of an image.</p></div></div>
+                    <div class="tool-card rounded-xl" data-tool="crop-image"><div class="p-6"><h3 class="text-xl font-semibold">Crop Image</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Cut and crop your images with ease.</p></div></div>
+                    <div class="tool-card rounded-xl" data-tool="convert-image"><div class="p-6"><h3 class="text-xl font-semibold">Image Converter</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Convert between JPG and PNG formats.</p></div></div>
+                </div>
+
+                <h2 class="text-2xl font-bold mb-4">PDF Tools</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
                     <div class="tool-card rounded-xl" data-tool="jpg-to-pdf"><div class="p-6"><h3 class="text-xl font-semibold">JPG to PDF</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Convert a JPG image to a PDF file.</p></div></div>
                     <div class="tool-card rounded-xl" data-tool="pdf-to-jpg"><div class="p-6"><h3 class="text-xl font-semibold">PDF to JPG</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Extract all pages of a PDF to JPG images.</p></div></div>
                     <div class="tool-card rounded-xl" data-tool="combine-pdfs"><div class="p-6"><h3 class="text-xl font-semibold">Combine PDFs & Images</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Merge PDFs and images into one PDF file.</p></div></div>
                     <div class="tool-card rounded-xl" data-tool="images-to-pdf"><div class="p-6"><h3 class="text-xl font-semibold">Images to PDF</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Combine multiple images into a single PDF.</p></div></div>
-                    <div class="tool-card rounded-xl" data-tool="compress-jpg"><div class="p-6"><h3 class="text-xl font-semibold">Compress JPG</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Reduce the file size of a JPG image.</p></div></div>
-                    <div class="tool-card rounded-xl" data-tool="resize-image"><div class="p-6"><h3 class="text-xl font-semibold">Resize Image</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Change the dimensions of an image.</p></div></div>
-                    <div class="tool-card rounded-xl" data-tool="crop-image"><div class="p-6"><h3 class="text-xl font-semibold">Crop Image</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Cut and crop your images with ease.</p></div></div>
-                    <div class="tool-card rounded-xl" data-tool="merge-images"><div class="p-6"><h3 class="text-xl font-semibold">Merge Images</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Join two images together.</p></div></div>
-                    <div class="tool-card rounded-xl" data-tool="convert-image"><div class="p-6"><h3 class="text-xl font-semibold">Image Converter</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Convert between JPG and PNG formats.</p></div></div>
+                </div>
+
+                <h2 class="text-2xl font-bold mb-4">External Tools</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                     <a href="https://icophoto.netlify.app/" target="_blank" rel="noopener noreferrer" class="tool-card rounded-xl block"><div class="p-6"><h3 class="text-xl font-semibold">IACO Photo Verify</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Verify your photo for official submissions.</p></div></a>
+                     <a href="https://iaco.netlify.app/" target="_blank" rel="noopener noreferrer" class="tool-card rounded-xl block"><div class="p-6"><h3 class="text-xl font-semibold">EID Photo Verify</h3><p class="text-sm text-[var(--text-secondary)] mt-1">Check photo compliance for Emirates ID.</p></div></a>
                 </div>
             </div>
             
@@ -171,7 +182,7 @@
     <template id="template-compress-jpg"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4">Compress JPG</h2><div class="drop-zone-container"></div><div class="my-4"><label for="qualitySlider" class="font-medium">Quality: <span id="qualityValue">0.8</span></label><input type="range" id="qualitySlider" min="0.1" max="1" step="0.1" value="0.8" class="w-full mt-2"></div><button id="compress-jpg-btn" class="action-btn">Compress & Download</button><div class="output-area"></div></div></template>
     <template id="template-resize-image"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4">Image Resizer</h2><div class="drop-zone-container"></div><div class="flex flex-wrap gap-4 my-4 items-center"><div><label for="newWidth" class="font-medium">Width:</label><input type="number" id="newWidth" placeholder="800" class="p-2 border rounded-md w-32 bg-[var(--bg-primary)] border-[var(--border-color)]"></div><div><label for="newHeight" class="font-medium">Height:</label><input type="number" id="newHeight" placeholder="600" class="p-2 border rounded-md w-32 bg-[var(--bg-primary)] border-[var(--border-color)]"></div><div class="flex items-center pt-5"><input type="checkbox" id="aspectRatio" class="h-4 w-4 rounded text-[var(--accent-color)] focus:ring-[var(--accent-color)]" checked><label for="aspectRatio" class="ml-2">Maintain Aspect Ratio</label></div></div><button id="resize-btn" class="action-btn">Resize & Download</button><div class="output-area"></div></div></template>
     <template id="template-crop-image"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4">Image Cropper</h2><div class="drop-zone-container"></div><div class="flex flex-col md:flex-row gap-6 items-start mt-4"><div class="w-full md:w-2/3"><div class="img-container rounded-lg overflow-hidden"><img id="imageToCrop" style="display: block; max-width: 100%;"></div></div><div class="w-full md:w-1/3 flex flex-col items-center"><p class="font-medium mb-2">Preview</p><div id="crop-preview" class="w-[150px] h-[150px] overflow-hidden rounded-lg border-2 border-dashed border-[var(--border-color)]"></div></div></div><button id="crop-btn" class="action-btn mt-4">Crop & Download</button><div class="output-area mt-4"></div></div></template>
-    <template id="template-merge-images"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4">Merge Images</h2><p class="mb-4 text-[var(--text-secondary)]">Drop two images to merge them.</p><div class="grid md:grid-cols-2 gap-4"><div class="drop-zone-container" data-input-id="img1"></div><div class="drop-zone-container" data-input-id="img2"></div></div><div class="flex items-center gap-4 my-4"><label class="font-medium">Merge Direction:</label><select id="mergeDirection" class="p-2 border rounded-md bg-[var(--bg-primary)] border-[var(--border-color)]"><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option></select></div><button id="merge-btn" class="action-btn">Merge Images</button><div class="output-area"></div></div></template>
+    <template id="template-merge-images"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4">Merge Images</h2><p class="mb-4 text-[var(--text-secondary)]">Drop two images to merge them.</p><div class="grid md:grid-cols-2 gap-4"><div class="drop-zone-container" data-input-id="img1"></div><div class="drop-zone-container" data-input-id="img2"></div></div><button id="merge-btn" class="action-btn">Generate Previews</button><div class="output-area"></div></div></template>
     <template id="template-convert-image"><div class="tool-content"><h2 class="text-2xl font-semibold mb-4">Image Converter</h2><div class="drop-zone-container"></div><div class="flex items-center gap-4 my-4"><label class="font-medium">Convert To:</label><select id="convertFormat" class="p-2 border rounded-md bg-[var(--bg-primary)] border-[var(--border-color)]"><option value="png">PNG</option><option value="jpeg">JPG</option></select></div><button id="convert-btn" class="action-btn">Convert Image</button><div class="output-area"></div></div></template>
     
     <script>
@@ -453,7 +464,7 @@
                 };
                 fileReader.readAsArrayBuffer(file);
             }
-            
+
             let combinedFiles = [];
             function handleCombineFilePreviews(files) {
                 const previewList = activeToolArea.querySelector('#combine-preview-list');
@@ -563,7 +574,7 @@
                     }
                     const mergedPdfBytes = await finalPdf.save();
                     const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
-                    createDownloadLink(URL.createObjectURL(blob), generateRandomFilename("combined", "pdf"), "Download Combined PDF", outputArea);
+                    createDownloadLink(URL.createObjectURL(blob), generateRandomFilename("combined_document", "pdf"), "Download Combined PDF", outputArea);
                 } catch(e) {
                     console.error(e);
                     outputArea.innerHTML = `<p class="text-red-500">An error occurred. One of the files might be corrupt or unsupported.</p>`;
@@ -572,13 +583,12 @@
                 }
             }
 
-
             let imageFilesOrder = [];
             function handleImagePreviews(files) {
                 const previewList = activeToolArea.querySelector('#image-preview-list');
                 previewList.innerHTML = '';
                 imageFilesOrder = files;
-                filesStore.set('files', imageFilesOrder); // Update the store
+                filesStore.set('files', imageFilesOrder);
                 imageFilesOrder.forEach((file, index) => {
                     const reader = new FileReader();
                     reader.onload = e => {
@@ -718,33 +728,44 @@
             async function handleMergeImages() {
                 const file1 = filesStore.get("img1");
                 const file2 = filesStore.get("img2");
-                const direction = activeToolArea.querySelector("#mergeDirection").value;
                 if (!file1 || !file2) { return void alert("Please select two images."); }
                 showLoader(true);
                 const outputDiv = activeToolArea.querySelector('.output-area');
                 try {
                     const [img1, img2] = await Promise.all([ loadImage(URL.createObjectURL(file1)), loadImage(URL.createObjectURL(file2)) ]);
-                    const canvas = document.createElement("canvas");
-                    const ctx = canvas.getContext("2d");
-                    if ("horizontal" === direction) {
-                        canvas.width = img1.width + img2.width;
-                        canvas.height = Math.max(img1.height, img2.height);
-                        ctx.drawImage(img1, 0, 0);
-                        ctx.drawImage(img2, img1.width, 0);
-                    } else {
-                        canvas.width = Math.max(img1.width, img2.width);
-                        canvas.height = img1.height + img2.height;
-                        ctx.drawImage(img1, 0, 0);
-                        ctx.drawImage(img2, 0, img1.height);
-                    }
-                    const url = canvas.toDataURL("image/png");
-                    outputDiv.innerHTML = `<p class="font-semibold mb-2">Preview:</p><img src="${url}" class="max-w-full h-auto rounded-lg shadow-md border border-[var(--border-color)] mb-4">`;
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = generateRandomFilename("merged", "png");
-                    a.textContent = "Download Merged Image";
-                    a.className = 'download-link';
-                    outputDiv.appendChild(a);
+                    
+                    // Vertical Canvas
+                    const vCanvas = document.createElement("canvas");
+                    const vCtx = vCanvas.getContext("2d");
+                    vCanvas.width = Math.max(img1.width, img2.width);
+                    vCanvas.height = img1.height + img2.height;
+                    vCtx.drawImage(img1, 0, 0);
+                    vCtx.drawImage(img2, 0, img1.height);
+                    const vUrl = vCanvas.toDataURL("image/png");
+
+                    // Horizontal Canvas
+                    const hCanvas = document.createElement("canvas");
+                    const hCtx = hCanvas.getContext("2d");
+                    hCanvas.width = img1.width + img2.width;
+                    hCanvas.height = Math.max(img1.height, img2.height);
+                    hCtx.drawImage(img1, 0, 0);
+                    hCtx.drawImage(img2, img1.width, 0);
+                    const hUrl = hCanvas.toDataURL("image/png");
+
+                    outputDiv.innerHTML = `
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="font-semibold mb-2 text-center">Vertical Preview</h4>
+                                <img src="${vUrl}" class="max-w-full h-auto rounded-lg shadow-md border border-[var(--border-color)] mb-4">
+                                <a href="${vUrl}" download="${generateRandomFilename('merged_vertical', 'png')}" class="download-link w-full text-center">Download Vertical</a>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-2 text-center">Horizontal Preview</h4>
+                                <img src="${hUrl}" class="max-w-full h-auto rounded-lg shadow-md border border-[var(--border-color)] mb-4">
+                                <a href="${hUrl}" download="${generateRandomFilename('merged_horizontal', 'png')}" class="download-link w-full text-center">Download Horizontal</a>
+                            </div>
+                        </div>
+                    `;
                 } catch(e) {
                      outputDiv.innerHTML = `<p class="text-red-500">Error merging images.</p>`;
                 } finally {
