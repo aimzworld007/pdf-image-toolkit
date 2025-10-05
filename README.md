@@ -1,107 +1,89 @@
-PDF & Image Toolkit Pro
-A versatile, all-in-one web application for all your PDF and image manipulation needs. This toolkit combines a suite of powerful client-side and server-side tools into a single, intuitive, tab-based interface with a sleek dark/light mode.
+PDF & Image Toolkit
+A simple, powerful, and free collection of client-side tools for all your PDF and image manipulation needs. This application is built as a single, self-contained HTML file using modern JavaScript libraries and runs entirely in your browser.
 
-Live Demo
-You can access the live version of this application here:
-[https://pdfimg.netlify.app/]
+No files are ever uploaded to a server, ensuring your data remains private and secure.
 
-✨ Key Features
-This application is packed with a wide range of tools, categorized for ease of use.
+Made With ❤️ By Ainul islam
+
+View Live Demo <-- Replace with your link after deploying!
+✨ Features
+A focused set of essential tools designed for reliability and ease of use.
 
 🖼️ Image Tools
-Compress JPG (Pro): Utilizes a powerful server-side function with the sharp library to provide superior, high-quality JPG compression.
+Merge Images: Join two images together either vertically or horizontally with a live preview of both options.
 
-Resize Image: Easily change the dimensions of any image, with an option to maintain the aspect ratio.
+Compress JPG: Reduce the file size of JPG images with an adjustable quality slider.
 
-Crop Image: An interactive, easy-to-use interface for cropping images with a live preview.
+Resize Image: Change the dimensions of any image while optionally maintaining the aspect ratio.
 
-Merge Images: Combine two images together, either vertically or horizontally.
+Crop Image: An interactive tool to crop images with a live preview.
 
-JPG to PNG Converter: Instantly convert JPG files to PNG format.
-
-PNG to JPG Converter: Instantly convert PNG files to JPG format, with an option to handle transparency.
+Image Converter: Easily convert images between PNG and JPG formats.
 
 📄 PDF Tools
-PDF to JPG (Pro): A robust, server-side tool that can quickly extract every page from large or complex PDFs into high-quality JPG images without crashing the browser.
+JPG to PDF: Quickly convert a single JPG image into a PDF document.
 
-Merge to PDF: A powerful utility to combine multiple files (PDFs, JPGs, and PNGs) into a single, unified PDF document. Includes drag-and-drop reordering.
+PDF to JPG: Extract every page of a PDF file into downloadable JPG images.
 
-Compress PDF (Pro): Reduce the file size of your PDFs using a server-side function, ideal for documents with many images.
+Combine PDFs & Images: A powerful tool to merge multiple PDF files and images. Upload your initial files, then add more, rearrange with drag-and-drop, delete unwanted pages, and combine everything into a single, new PDF.
 
-JPG to PDF: Quickly convert a single JPG image into a PDF file.
+Images to PDF: Select multiple images, reorder them with drag-and-drop, and combine them into one PDF.
 
-Images to PDF: Select and reorder multiple images to combine them into one PDF document.
+🔗 External Tools
+Direct links to IACO Photo Verify and EID Photo Verify for official photo compliance checks.
 
-🚀 General Features
-Tab-Based Interface: A modern, fast-switching tab navigation inspired by leading web applications.
+🚀 Core Principles
+100% Client-Side: All processing happens in your browser. Your files are never sent to a server.
 
-Universal Drag & Drop: An intuitive drag-and-drop file upload zone for every tool.
+Privacy-Focused: Since no data is uploaded, your privacy is guaranteed.
 
-Dark/Light Mode: A beautiful and responsive theme toggle that respects and saves user preference.
+Works Offline: Once the page is loaded, all tools are available without an internet connection.
 
-Client & Server-Side Power: Combines the privacy of client-side processing for simple tasks with the power of serverless functions for intensive operations.
-
-Live Previews: See previews of your files before combining them, including for PDFs and images.
-
-Tool Suggestions: Each tool provides contextually relevant suggestions to help users discover other useful features.
-
-Fully Responsive: A clean and modern UI that works flawlessly on desktop, tablet, and mobile devices.
+Zero Installation: It's a single HTML file. Just download and open it in your browser.
 
 🛠️ Technologies Used
-Frontend
-HTML5
+HTML5 & Vanilla JavaScript
 
-Tailwind CSS: For a modern, utility-first design.
+Tailwind CSS for styling.
 
-JavaScript (ES6+): For all client-side logic and interactivity.
+pdf-lib.js for client-side PDF creation and modification.
 
-Libraries:
+pdf.js for rendering PDF page previews.
 
-pdf-lib.js: For client-side PDF creation and manipulation.
+Cropper.js for the interactive image cropping tool.
 
-pdf.js: For rendering PDF previews in the browser.
+⚙️ Getting Started
+This project is a single, self-contained index.html file. There is no build process or installation required.
 
-cropper.js: For the interactive image cropping tool.
+Download: Download the index.html file from this repository.
 
-Backend (Serverless Functions on Netlify)
-Node.js
+Open: Open the index.html file in any modern web browser (like Chrome, Firefox, or Edge).
 
-Sharp: A high-performance Node.js image processing library used for top-tier JPG compression and PDF-to-JPG conversion.
+That's it! The application is fully functional.
 
-pdf-lib: Used on the server for robust PDF compression.
+🌐 Deployment
+Hosting this application is incredibly simple because it's just one static file.
 
-🚀 Deployment
-This project is optimized for easy deployment on Netlify.
+Option 1: GitHub Pages (Easiest)
+Ensure your index.html file is in a public GitHub repository.
 
-Required File Structure
-For Netlify to correctly deploy the serverless functions, your project repository must follow this exact structure:
+In your repository settings, go to the "Pages" section.
 
-|   |-- functions/
-|       |-- compress-jpg.js
-|       |-- compress-pdf.js
-|       |-- pdf-to-jpg.js
-|-- index.html
-|-- package.json
+Select the main branch as your source and click "Save".
 
-Steps to Deploy:
-Upload to GitHub: Create a new GitHub repository and upload all the project files, making sure to maintain the folder structure shown above.
+Your site will be live at https://<your-username>.github.io/<your-repo-name>/ in a few minutes.
 
-Connect to Netlify:
+Option 2: Netlify / Vercel
+Sign up for a free account on Netlify or Vercel.
 
-Log in to your Netlify account.
+Connect your GitHub repository.
 
-Click "Add new site" -> "Import an existing project".
+The default settings are fine. No build command is needed.
 
-Connect to GitHub and select the repository you just created.
+Deploy!
 
-Deploy: Netlify will automatically detect your package.json and the netlify/functions directory. The default settings should work perfectly. Simply click "Deploy site".
+🤝 Contributing
+Contributions, issues, and feature requests are welcome! Feel free to check the issues page. <!-- Replace with your actual repo link -->
 
-Netlify will install the server-side dependencies (sharp, pdf-lib) and deploy your functions, making the "Pro" features fully operational.
-
-💻 Local Development
-You can open the index.html file in any modern web browser to test the client-side features.
-
-Important Note: The "Pro" features (Compress JPG, Compress PDF, PDF to JPG) will not work when you open the file locally. They require the Netlify server environment to run. The browser console will show a "Failed to parse URL" error, which is expected in a local environment. To test these features, you must deploy the site to Netlify.
-
-© Credits
-This application was developed by Ainul islam with the assistance of Gemini.
+📄 License
+This project is licensed under the MIT License.
