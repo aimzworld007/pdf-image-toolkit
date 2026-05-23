@@ -45,8 +45,14 @@ const TOOL_SECTIONS = [
     category: 'lamination',
     title: 'Lamination Tools',
     items: [
-      { id: 'print-photo-pdf', label: 'Print Photo PDF', desc: 'Auto-grid passport photos on A4/Letter pages for direct print.' },
       { id: 'eid-lamination', label: 'EID Lamination Tool', desc: 'High-DPI front/back EID lamination print PDF.' },
+    ],
+  },
+  {
+    category: 'photo-print',
+    title: 'Photo Print Tools',
+    items: [
+      { id: 'print-photo-pdf', label: 'Print Photo PDF', desc: 'Auto-grid passport photos on A4/Letter pages for direct print.' },
     ],
   },
 ];
@@ -1793,39 +1799,39 @@ function fitContain(boxW, boxH, imgW, imgH) {
 function PrintPhotoPdfTool({ onBack }) {
   const [file, setFile] = useState(null);
   const [sourcePreview, setSourcePreview] = useState('');
-  const [pageSize, setPageSize] = useState('A4');
-  const [photoWmm, setPhotoWmm] = useState(35);
-  const [photoHmm, setPhotoHmm] = useState(45);
   const [quantity, setQuantity] = useState(30);
-  const [marginMm, setMarginMm] = useState(5);
-  const [gapMm, setGapMm] = useState(2);
-  const [autoColumns, setAutoColumns] = useState(true);
-  const [manualColumns, setManualColumns] = useState(5);
   const [previewPage, setPreviewPage] = useState('');
   const [status, setStatus] = useState('');
   const [tone, setTone] = useState('muted');
   const [busy, setBusy] = useState(false);
 
+  const PHOTO_W_MM = 35;
+  const PHOTO_H_MM = 45;
+  const COLS = 5;
+  const PAGE = getPageSizeMm('A4');
+  const MARGIN_MM = 7;
+  const VERTICAL_GAP_MM = 3;
+
   const layout = useMemo(() => {
-    const page = getPageSizeMm(pageSize);
-    const usableW = Math.max(0, page.width - marginMm * 2);
-    const usableH = Math.max(0, page.height - marginMm * 2);
-    const maxCols = Math.max(1, Math.floor((usableW + gapMm) / (photoWmm + gapMm)));
-    const cols = autoColumns ? maxCols : Math.max(1, Math.min(manualColumns || 1, maxCols));
-    const rows = Math.max(1, Math.floor((usableH + gapMm) / (photoHmm + gapMm)));
+    const usableW = Math.max(0, PAGE.width - MARGIN_MM * 2);
+    const usableH = Math.max(0, PAGE.height - MARGIN_MM * 2);
+    const cols = COLS;
+    const horizontalGap = cols > 1 ? Math.max(0, (usableW - cols * PHOTO_W_MM) / (cols - 1)) : 0;
+    const rows = Math.max(1, Math.floor((usableH + VERTICAL_GAP_MM) / (PHOTO_H_MM + VERTICAL_GAP_MM)));
     const perPage = Math.max(1, cols * rows);
     const pages = Math.max(1, Math.ceil(quantity / perPage));
     return {
-      page,
+      page: PAGE,
       cols,
       rows,
       perPage,
       pages,
-      maxCols,
+      horizontalGap,
+      verticalGap: VERTICAL_GAP_MM,
       usableW,
       usableH,
     };
-  }, [pageSize, marginMm, gapMm, photoWmm, photoHmm, autoColumns, manualColumns, quantity]);
+  }, [quantity]);
 
   const onSelectFile = async (picked) => {
     setFile(picked);
@@ -1861,12 +1867,12 @@ function PrintPhotoPdfTool({ onBack }) {
       const scaleX = canvas.width / layout.page.width;
       const scaleY = canvas.height / layout.page.height;
 
-      const cellW = photoWmm * scaleX;
-      const cellH = photoHmm * scaleY;
-      const gapX = gapMm * scaleX;
-      const gapY = gapMm * scaleY;
-      const marginX = marginMm * scaleX;
-      const marginY = marginMm * scaleY;
+      const cellW = PHOTO_W_MM * scaleX;
+      const cellH = PHOTO_H_MM * scaleY;
+      const gapX = layout.horizontalGap * scaleX;
+      const gapY = layout.verticalGap * scaleY;
+      const marginX = MARGIN_MM * scaleX;
+      const marginY = MARGIN_MM * scaleY;
 
       const image = await loadImage(sourcePreview);
       for (let row = 0; row < layout.rows; row += 1) {
@@ -1892,7 +1898,7 @@ function PrintPhotoPdfTool({ onBack }) {
     return () => {
       cancelled = true;
     };
-  }, [sourcePreview, layout, gapMm, marginMm, photoWmm, photoHmm]);
+  }, [sourcePreview, layout]);
 
   const buildPdfBlob = async () => {
     if (!file) {
@@ -1902,13 +1908,13 @@ function PrintPhotoPdfTool({ onBack }) {
     const pdf = await PDFDocument.create();
     const imgDataUrl = await readAsDataUrl(file);
     const image = file.type === 'image/png' ? await pdf.embedPng(imgDataUrl) : await pdf.embedJpg(imgDataUrl);
-    const imgRatio = image.width / image.height;
 
     const pageSizePt = layout.page.points;
-    const marginPt = mmToPt(marginMm);
-    const gapPt = mmToPt(gapMm);
-    const slotWPt = mmToPt(photoWmm);
-    const slotHPt = mmToPt(photoHmm);
+    const marginPt = mmToPt(MARGIN_MM);
+    const horizontalGapPt = mmToPt(layout.horizontalGap);
+    const verticalGapPt = mmToPt(layout.verticalGap);
+    const slotWPt = mmToPt(PHOTO_W_MM);
+    const slotHPt = mmToPt(PHOTO_H_MM);
 
     let placed = 0;
     while (placed < quantity) {
@@ -1916,11 +1922,11 @@ function PrintPhotoPdfTool({ onBack }) {
       for (let row = 0; row < layout.rows; row += 1) {
         for (let col = 0; col < layout.cols; col += 1) {
           if (placed >= quantity) break;
-          const x = marginPt + col * (slotWPt + gapPt);
-          const topY = marginPt + row * (slotHPt + gapPt);
+          const x = marginPt + col * (slotWPt + horizontalGapPt);
+          const topY = marginPt + row * (slotHPt + verticalGapPt);
           const y = page.getHeight() - topY - slotHPt;
 
-          const fit = fitContain(slotWPt, slotHPt, imgRatio, 1);
+          const fit = fitContain(slotWPt, slotHPt, image.width, image.height);
           page.drawRectangle({ x, y, width: slotWPt, height: slotHPt, borderWidth: 0.4, borderColor: rgb(0.65, 0.69, 0.76) });
           page.drawImage(image, {
             x: x + fit.xOffset,
@@ -1983,60 +1989,23 @@ function PrintPhotoPdfTool({ onBack }) {
     <ToolFrame title="Print Photo PDF" onBack={onBack}>
       <SectionHeader
         title="Passport Photo Print Sheet"
-        subtitle="Upload one photo, set size (default 35x45mm), choose quantity, and generate an auto-grid printable PDF."
+        subtitle="Upload one photo, enter quantity, and auto-fill A4 pages row-wise (5 per row) in 35x45mm size."
       />
       <div className="row">
         <FileInput accept="image/jpeg,image/png" onSelect={onSelectFile} label={file ? file.name : 'Select Photo'} />
+        <div style={{ width: 130 }}>
+          <label className="label">Quantity</label>
+          <input className="input" type="number" value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))} />
+        </div>
         <button className="btn" onClick={generateAndDownload} disabled={busy}>{busy ? 'Building...' : 'Download Print PDF'}</button>
         <button className="btn alt" onClick={openForPrint} disabled={busy}>{busy ? 'Opening...' : 'Open Print Preview'}</button>
       </div>
 
       <FileInfoCard file={file} />
 
-      <div className="row" style={{ marginTop: 12, alignItems: 'end' }}>
-        <div style={{ width: 130 }}>
-          <label className="label">Page Size</label>
-          <select className="select" value={pageSize} onChange={(e) => setPageSize(e.target.value)}>
-            <option value="A4">A4</option>
-            <option value="LETTER">Letter</option>
-          </select>
-        </div>
-        <div style={{ width: 130 }}>
-          <label className="label">Photo W (mm)</label>
-          <input className="input" type="number" value={photoWmm} onChange={(e) => setPhotoWmm(Math.max(10, Number(e.target.value) || 35))} />
-        </div>
-        <div style={{ width: 130 }}>
-          <label className="label">Photo H (mm)</label>
-          <input className="input" type="number" value={photoHmm} onChange={(e) => setPhotoHmm(Math.max(10, Number(e.target.value) || 45))} />
-        </div>
-        <div style={{ width: 130 }}>
-          <label className="label">Quantity</label>
-          <input className="input" type="number" value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))} />
-        </div>
-        <div style={{ width: 130 }}>
-          <label className="label">Margin (mm)</label>
-          <input className="input" type="number" value={marginMm} onChange={(e) => setMarginMm(Math.max(0, Number(e.target.value) || 0))} />
-        </div>
-        <div style={{ width: 130 }}>
-          <label className="label">Gap (mm)</label>
-          <input className="input" type="number" value={gapMm} onChange={(e) => setGapMm(Math.max(0, Number(e.target.value) || 0))} />
-        </div>
-      </div>
-
-      <div className="row" style={{ marginTop: 10, alignItems: 'center' }}>
-        <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input type="checkbox" checked={autoColumns} onChange={(e) => setAutoColumns(e.target.checked)} />
-          Auto columns per row
-        </label>
-        {!autoColumns ? (
-          <div style={{ width: 180 }}>
-            <label className="label">Photos per row</label>
-            <input className="input" type="number" value={manualColumns} onChange={(e) => setManualColumns(Math.max(1, Number(e.target.value) || 1))} />
-          </div>
-        ) : null}
-      </div>
-
       <div style={{ marginTop: 10 }}>
+        <span className="kpi" style={{ marginRight: 8 }}>A4 Page</span>
+        <span className="kpi" style={{ marginRight: 8 }}>35x45 mm</span>
         <span className="kpi" style={{ marginRight: 8 }}>{layout.cols} columns</span>
         <span className="kpi" style={{ marginRight: 8 }}>{layout.rows} rows</span>
         <span className="kpi" style={{ marginRight: 8 }}>{layout.perPage} photos/page</span>
@@ -2066,6 +2035,7 @@ function EidPhotoEditor({ side, data, setData, targetWidthIn, targetHeightIn, ra
       src,
       rotation: 0,
       crop: { x: 0, y: 0, w: img.width, h: img.height },
+      fitMode: prev.fitMode || 'crop',
       processed: '',
       status: `Loaded ${img.width} x ${img.height}px`,
       tone: 'muted',
@@ -2079,7 +2049,8 @@ function EidPhotoEditor({ side, data, setData, targetWidthIn, targetHeightIn, ra
     }
 
     const { x, y, w, h } = data.crop;
-    if (w <= 10 || h <= 10) {
+    const isCropMode = (data.fitMode || 'crop') === 'crop';
+    if (isCropMode && (w <= 10 || h <= 10)) {
       setData((prev) => ({ ...prev, tone: 'error', status: 'Crop size must be greater than 10px.' }));
       return;
     }
@@ -2096,46 +2067,60 @@ function EidPhotoEditor({ side, data, setData, targetWidthIn, targetHeightIn, ra
       rCtx.drawImage(source, -source.width / 2, -source.height / 2);
       rCtx.setTransform(1, 0, 0, 1, 0, 0);
 
-      let finalCropW;
-      let finalCropH;
-      if (w / h > ratio) {
-        finalCropH = h;
-        finalCropW = finalCropH * ratio;
-      } else {
-        finalCropW = w;
-        finalCropH = finalCropW / ratio;
-      }
-
-      const finalCropX = x + (w - finalCropW) / 2;
-      const finalCropY = y + (h - finalCropH) / 2;
-
-      const croppedCanvas = document.createElement('canvas');
-      croppedCanvas.width = finalCropW;
-      croppedCanvas.height = finalCropH;
-      croppedCanvas.getContext('2d').drawImage(
-        rotatedCanvas,
-        finalCropX,
-        finalCropY,
-        finalCropW,
-        finalCropH,
-        0,
-        0,
-        finalCropW,
-        finalCropH
-      );
-
       const targetW = Math.round(targetWidthIn * 600);
       const targetH = Math.round(targetHeightIn * 600);
       const output = document.createElement('canvas');
       output.width = targetW;
       output.height = targetH;
-      output.getContext('2d').drawImage(croppedCanvas, 0, 0, targetW, targetH);
+      const outCtx = output.getContext('2d');
+      outCtx.fillStyle = '#ffffff';
+      outCtx.fillRect(0, 0, targetW, targetH);
+
+      if (isCropMode) {
+        let finalCropW;
+        let finalCropH;
+        if (w / h > ratio) {
+          finalCropH = h;
+          finalCropW = finalCropH * ratio;
+        } else {
+          finalCropW = w;
+          finalCropH = finalCropW / ratio;
+        }
+
+        const finalCropX = x + (w - finalCropW) / 2;
+        const finalCropY = y + (h - finalCropH) / 2;
+
+        const croppedCanvas = document.createElement('canvas');
+        croppedCanvas.width = finalCropW;
+        croppedCanvas.height = finalCropH;
+        croppedCanvas.getContext('2d').drawImage(
+          rotatedCanvas,
+          finalCropX,
+          finalCropY,
+          finalCropW,
+          finalCropH,
+          0,
+          0,
+          finalCropW,
+          finalCropH
+        );
+        outCtx.drawImage(croppedCanvas, 0, 0, targetW, targetH);
+      } else {
+        const fit = fitContain(targetW, targetH, rotatedCanvas.width, rotatedCanvas.height);
+        outCtx.drawImage(
+          rotatedCanvas,
+          fit.xOffset,
+          fit.yOffset,
+          fit.width,
+          fit.height
+        );
+      }
 
       setData((prev) => ({
         ...prev,
         processed: output.toDataURL('image/png', 1.0),
         tone: 'success',
-        status: `Processed at ${targetW} x ${targetH}px.`,
+        status: `Processed at ${targetW} x ${targetH}px (${isCropMode ? 'Crop to Fill' : 'Auto Fit'}).`,
       }));
     } catch {
       setData((prev) => ({ ...prev, tone: 'error', status: 'Processing failed for this side.' }));
@@ -2159,14 +2144,31 @@ function EidPhotoEditor({ side, data, setData, targetWidthIn, targetHeightIn, ra
           <label className="label">Rotation: {data.rotation.toFixed(1)}°</label>
           <input className="input" type="range" min="-180" max="180" step="0.1" value={data.rotation} onChange={(e) => setData((prev) => ({ ...prev, rotation: Number(e.target.value), processed: '' }))} />
         </div>
+        <div style={{ minWidth: 230 }}>
+          <label className="label">Fit Option</label>
+          <select
+            className="select"
+            value={data.fitMode || 'crop'}
+            onChange={(e) => setData((prev) => ({ ...prev, fitMode: e.target.value, processed: '' }))}
+          >
+            <option value="crop">Crop to Fill Target Size</option>
+            <option value="autofit">Auto Fit Full Image</option>
+          </select>
+        </div>
       </div>
 
-      <div className="row" style={{ marginTop: 8 }}>
-        <div style={{ width: 90 }}><label className="label">X</label><input className="input" type="number" value={data.crop.x} onChange={(e) => setData((prev) => ({ ...prev, crop: { ...prev.crop, x: Number(e.target.value) }, processed: '' }))} /></div>
-        <div style={{ width: 90 }}><label className="label">Y</label><input className="input" type="number" value={data.crop.y} onChange={(e) => setData((prev) => ({ ...prev, crop: { ...prev.crop, y: Number(e.target.value) }, processed: '' }))} /></div>
-        <div style={{ width: 110 }}><label className="label">Width</label><input className="input" type="number" value={data.crop.w} onChange={(e) => setData((prev) => ({ ...prev, crop: { ...prev.crop, w: Number(e.target.value) }, processed: '' }))} /></div>
-        <div style={{ width: 110 }}><label className="label">Height</label><input className="input" type="number" value={data.crop.h} onChange={(e) => setData((prev) => ({ ...prev, crop: { ...prev.crop, h: Number(e.target.value) }, processed: '' }))} /></div>
-      </div>
+      {(data.fitMode || 'crop') === 'crop' ? (
+        <div className="row" style={{ marginTop: 8 }}>
+          <div style={{ width: 90 }}><label className="label">X</label><input className="input" type="number" value={data.crop.x} onChange={(e) => setData((prev) => ({ ...prev, crop: { ...prev.crop, x: Number(e.target.value) }, processed: '' }))} /></div>
+          <div style={{ width: 90 }}><label className="label">Y</label><input className="input" type="number" value={data.crop.y} onChange={(e) => setData((prev) => ({ ...prev, crop: { ...prev.crop, y: Number(e.target.value) }, processed: '' }))} /></div>
+          <div style={{ width: 110 }}><label className="label">Width</label><input className="input" type="number" value={data.crop.w} onChange={(e) => setData((prev) => ({ ...prev, crop: { ...prev.crop, w: Number(e.target.value) }, processed: '' }))} /></div>
+          <div style={{ width: 110 }}><label className="label">Height</label><input className="input" type="number" value={data.crop.h} onChange={(e) => setData((prev) => ({ ...prev, crop: { ...prev.crop, h: Number(e.target.value) }, processed: '' }))} /></div>
+        </div>
+      ) : (
+        <p className="status" style={{ marginTop: 8 }}>
+          Auto Fit mode uses the full image and fits it into target size without manual crop.
+        </p>
+      )}
 
       {data.processed ? (
         <div style={{ marginTop: 10 }}>
@@ -2185,8 +2187,8 @@ function EidPhotoEditor({ side, data, setData, targetWidthIn, targetHeightIn, ra
 function EidLaminationTool({ onBack }) {
   const [widthIn, setWidthIn] = useState(3.2);
   const [heightIn, setHeightIn] = useState(2.2);
-  const [front, setFront] = useState({ file: null, src: '', crop: { x: 0, y: 0, w: 0, h: 0 }, rotation: 0, processed: '', status: '', tone: 'muted' });
-  const [back, setBack] = useState({ file: null, src: '', crop: { x: 0, y: 0, w: 0, h: 0 }, rotation: 0, processed: '', status: '', tone: 'muted' });
+  const [front, setFront] = useState({ file: null, src: '', crop: { x: 0, y: 0, w: 0, h: 0 }, rotation: 0, fitMode: 'crop', processed: '', status: '', tone: 'muted' });
+  const [back, setBack] = useState({ file: null, src: '', crop: { x: 0, y: 0, w: 0, h: 0 }, rotation: 0, fitMode: 'crop', processed: '', status: '', tone: 'muted' });
   const [status, setStatus] = useState('');
   const [tone, setTone] = useState('muted');
 
@@ -2358,6 +2360,7 @@ export default function ToolkitApp({ category = 'all', title, subtitle }) {
           <Link href="/image-tools" className="btn ghost">Image Tools</Link>
           <Link href="/pdf-tools" className="btn ghost">PDF Tools</Link>
           <Link href="/lamination-tools" className="btn ghost">Lamination Tools</Link>
+          <Link href="/photo-print-tools" className="btn ghost">Photo Print Tools</Link>
         </div>
       </header>
 

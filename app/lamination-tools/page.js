@@ -7,7 +7,7 @@ export default function LaminationToolsPage() {
       <ToolkitApp
         category="lamination"
         title="Lamination Tools"
-        subtitle="Passport/EID and print-photo workflows prepared for direct PDF printing."
+        subtitle="Passport/EID lamination workflows prepared for direct PDF printing."
       />
     </Suspense>
   );
