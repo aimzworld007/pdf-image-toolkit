@@ -25,34 +25,44 @@ const HOME_CATEGORIES = [
 
 const EXTERNAL_TOOLS = [
   {
-    title: 'PDF & IMAGE TOOL',
-    url: 'https://pdfimgtools.vercel.app/',
-  },
-  {
+    icon: '💰',
     title: 'REMIT BD',
     url: 'https://remitbd.vercel.app/',
+    desc: 'Fast remittance workflow and transaction support tools.',
   },
   {
+    icon: '🍽️',
     title: 'Mess Meal Manager system',
     url: 'https://smm24.vercel.app/',
+    desc: 'Meal planning, cost tracking, and member-wise management.',
   },
   {
+    icon: '⚙️',
     title: 'WORK TRACKING MANAGMENT SYSTEM',
     url: 'https://worktms.vercel.app',
+    desc: 'Task assignment, activity logs, and progress monitoring.',
   },
   {
     title: 'UAE VAT & TAX SUITE SYSTEM',
+    icon: '🔗',
     url: 'https://www.uaevat.live',
+    desc: 'VAT calculators, tax helpers, and compliance utilities.',
   },
   {
+    icon: '🔗',
     title: 'PERSONAL FINANCE MANAGER',
     url: 'https://finpulse24.vercel.app/',
+    desc: 'Budgeting, expense insights, and savings overview.',
   },
   {
+    icon: '🔗',
     title: 'TYPING & TRVALE MANAGMENT ERP SYSTEM',
     url: 'https://ecashbiz.com/landing',
+    desc: 'ERP toolkit for typing centers and travel operations.',
   },
 ];
+
+const MARQUEE_TOOLS = [...EXTERNAL_TOOLS, ...EXTERNAL_TOOLS];
 
 export default function Home() {
   return (
@@ -84,15 +94,23 @@ export default function Home() {
 
       <section className="home-section">
         <h2 className="section-title">Other Tools</h2>
-        <div className="home-external-grid">
-          {EXTERNAL_TOOLS.map((tool) => (
-            <article key={tool.url} className="home-external-card">
-              <h3>{tool.title}</h3>
-              <a href={tool.url} target="_blank" rel="noopener noreferrer" className="btn alt home-external-btn">
-                Go to Tool
-              </a>
-            </article>
-          ))}
+        <div className="home-marquee-wrap">
+          <div className="home-marquee-track">
+            {MARQUEE_TOOLS.map((tool, index) => (
+              <article
+                key={`${tool.url}-${index}`}
+                className="home-marquee-card"
+                aria-hidden={index >= EXTERNAL_TOOLS.length}
+              >
+                <a href={tool.url} target="_blank" rel="noopener noreferrer" className="home-external-link-title">
+                  <span className="home-tool-icon">{tool.icon}</span>
+                  <span>{tool.title}</span>
+                  <span className="home-open-pill">Open</span>
+                </a>
+                <p>{tool.desc}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
