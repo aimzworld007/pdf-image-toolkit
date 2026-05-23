@@ -36,6 +36,15 @@ npm run dev
 
 Open http://localhost:3000
 
+## App Structure
+
+- `/` Home (3 main categories)
+- `/image-tools` Image tools workspace
+- `/pdf-tools` PDF tools workspace
+- `/lamination-tools` Lamination tools workspace
+
+Tools open with URL query routing, e.g. `/pdf-tools?tool=pdf-workbench`.
+
 ## Production Build
 
 ```bash

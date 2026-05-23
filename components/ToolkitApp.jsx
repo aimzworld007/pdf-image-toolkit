@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useId, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { PDFDocument, PageSizes, rgb } from 'pdf-lib';
 import {
   downloadBlob,
@@ -16,6 +18,7 @@ import {
 
 const TOOL_SECTIONS = [
   {
+    category: 'image',
     title: 'Image Tools',
     items: [
       { id: 'merge-images', label: 'Merge Images', desc: 'Join two images vertically or horizontally.' },
@@ -28,21 +31,21 @@ const TOOL_SECTIONS = [
     ],
   },
   {
+    category: 'pdf',
     title: 'PDF Tools',
     items: [
-      { id: 'jpg-to-pdf', label: 'JPG to PDF', desc: 'Convert one JPG image to PDF.' },
       { id: 'pdf-workbench', label: 'PDF Workbench', desc: 'Tabbed PDF studio like online converter layout.' },
       { id: 'pdf-to-jpg', label: 'PDF to JPG', desc: 'Extract all PDF pages to JPG images.' },
       { id: 'combine-pdfs', label: 'Combine PDFs & Images', desc: 'Reorder and merge PDFs/images into one PDF.' },
-      { id: 'images-to-pdf', label: 'Images to PDF', desc: 'Combine many images into one PDF.' },
       { id: 'pdf-page-studio', label: 'PDF Page Studio', desc: 'Remove/rearrange pages, add blank/image pages, and export.' },
       { id: 'compress-pdf', label: 'Compress PDF', desc: 'Optimize PDF streams for smaller file size.' },
-      { id: 'print-photo-pdf', label: 'Print Photo PDF', desc: 'Auto-grid passport photos on A4/Letter pages for direct print.' },
     ],
   },
   {
-    title: 'Special Tools',
+    category: 'lamination',
+    title: 'Lamination Tools',
     items: [
+      { id: 'print-photo-pdf', label: 'Print Photo PDF', desc: 'Auto-grid passport photos on A4/Letter pages for direct print.' },
       { id: 'eid-lamination', label: 'EID Lamination Tool', desc: 'High-DPI front/back EID lamination print PDF.' },
     ],
   },
@@ -52,7 +55,7 @@ function ToolFrame({ title, onBack, children }) {
   return (
     <div className="panel">
       <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <button className="btn ghost" onClick={onBack}>Back To Home</button>
+        <button className="btn ghost" onClick={onBack}>Back To Tools</button>
         <span className="kpi">{title}</span>
       </div>
       {children}
@@ -2305,27 +2308,67 @@ function renderTool(activeTool, onBack) {
   }
 }
 
-export default function ToolkitApp() {
+export default function ToolkitApp({ category = 'all', title, subtitle }) {
   const [activeTool, setActiveTool] = useState(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const sections = useMemo(() => {
+    if (category === 'all') return TOOL_SECTIONS;
+    return TOOL_SECTIONS.filter((section) => section.category === category);
+  }, [category]);
+
+  const allowedToolIds = useMemo(
+    () => sections.flatMap((section) => section.items.map((item) => item.id)),
+    [sections]
+  );
+
+  useEffect(() => {
+    const requested = searchParams.get('tool');
+    if (requested && allowedToolIds.includes(requested)) {
+      setActiveTool(requested);
+    } else {
+      setActiveTool(null);
+    }
+  }, [searchParams, allowedToolIds]);
+
+  const openTool = (toolId) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tool', toolId);
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const closeTool = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('tool');
+    const nextQuery = params.toString();
+    router.push(nextQuery ? `${pathname}?${nextQuery}` : pathname);
+  };
 
   return (
     <main className="container">
       <header className="hero" style={{ marginBottom: 20 }}>
-        <h1>PDF & Image Toolkit Pro</h1>
+        <h1>{title || 'PDF & Image Toolkit Pro'}</h1>
         <p>
-          Modern Next.js toolkit with smooth PDF/image workflows and built-in EID lamination support.
-          Everything runs client-side. No login or registration required.
+          {subtitle || 'Modern Next.js toolkit with smooth PDF/image workflows and built-in EID lamination support. Everything runs client-side. No login or registration required.'}
         </p>
+        <div className="row" style={{ marginTop: 12 }}>
+          <Link href="/" className="btn ghost">Home</Link>
+          <Link href="/image-tools" className="btn ghost">Image Tools</Link>
+          <Link href="/pdf-tools" className="btn ghost">PDF Tools</Link>
+          <Link href="/lamination-tools" className="btn ghost">Lamination Tools</Link>
+        </div>
       </header>
 
       {!activeTool ? (
         <>
-          {TOOL_SECTIONS.map((section) => (
+          {sections.map((section) => (
             <section key={section.title}>
               <h2 className="section-title">{section.title}</h2>
               <div className="tools-grid">
                 {section.items.map((tool) => (
-                  <article key={tool.id} className="tool-card" onClick={() => setActiveTool(tool.id)}>
+                  <article key={tool.id} className="tool-card" onClick={() => openTool(tool.id)}>
                     <h3>{tool.label}</h3>
                     <p>{tool.desc}</p>
                   </article>
@@ -2335,7 +2378,7 @@ export default function ToolkitApp() {
           ))}
         </>
       ) : (
-        renderTool(activeTool, () => setActiveTool(null))
+        renderTool(activeTool, closeTool)
       )}
     </main>
   );
