@@ -17,6 +17,7 @@ A modern Next.js app for PDF and image utilities with no login/registration.
 - Images to PDF
 - PDF Page Studio (remove/reorder/add blank/add image pages)
 - PDF Compress / Optimize
+- Print Photo PDF (auto-grid passport photos on A4/Letter)
 - EID Lamination Tool (front/back high-DPI workflow + A4 export)
 
 ## Tech Stack

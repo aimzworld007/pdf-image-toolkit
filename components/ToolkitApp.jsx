@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PDFDocument, PageSizes, rgb } from 'pdf-lib';
 import {
   downloadBlob,
@@ -36,6 +36,7 @@ const TOOL_SECTIONS = [
       { id: 'images-to-pdf', label: 'Images to PDF', desc: 'Combine many images into one PDF.' },
       { id: 'pdf-page-studio', label: 'PDF Page Studio', desc: 'Remove/rearrange pages, add blank/image pages, and export.' },
       { id: 'compress-pdf', label: 'Compress PDF', desc: 'Optimize PDF streams for smaller file size.' },
+      { id: 'print-photo-pdf', label: 'Print Photo PDF', desc: 'Auto-grid passport photos on A4/Letter pages for direct print.' },
     ],
   },
   {
@@ -1464,6 +1465,287 @@ function CompressPdfTool({ onBack }) {
   );
 }
 
+function getPageSizeMm(pageSize) {
+  if (pageSize === 'LETTER') return { width: 215.9, height: 279.4, points: PageSizes.Letter };
+  return { width: 210, height: 297, points: PageSizes.A4 };
+}
+
+function fitContain(boxW, boxH, imgW, imgH) {
+  const ratio = imgW / imgH;
+  const boxRatio = boxW / boxH;
+  if (ratio > boxRatio) {
+    const width = boxW;
+    const height = width / ratio;
+    return { width, height, xOffset: 0, yOffset: (boxH - height) / 2 };
+  }
+  const height = boxH;
+  const width = height * ratio;
+  return { width, height, xOffset: (boxW - width) / 2, yOffset: 0 };
+}
+
+function PrintPhotoPdfTool({ onBack }) {
+  const [file, setFile] = useState(null);
+  const [sourcePreview, setSourcePreview] = useState('');
+  const [pageSize, setPageSize] = useState('A4');
+  const [photoWmm, setPhotoWmm] = useState(35);
+  const [photoHmm, setPhotoHmm] = useState(45);
+  const [quantity, setQuantity] = useState(30);
+  const [marginMm, setMarginMm] = useState(5);
+  const [gapMm, setGapMm] = useState(2);
+  const [autoColumns, setAutoColumns] = useState(true);
+  const [manualColumns, setManualColumns] = useState(5);
+  const [previewPage, setPreviewPage] = useState('');
+  const [status, setStatus] = useState('');
+  const [tone, setTone] = useState('muted');
+  const [busy, setBusy] = useState(false);
+
+  const layout = useMemo(() => {
+    const page = getPageSizeMm(pageSize);
+    const usableW = Math.max(0, page.width - marginMm * 2);
+    const usableH = Math.max(0, page.height - marginMm * 2);
+    const maxCols = Math.max(1, Math.floor((usableW + gapMm) / (photoWmm + gapMm)));
+    const cols = autoColumns ? maxCols : Math.max(1, Math.min(manualColumns || 1, maxCols));
+    const rows = Math.max(1, Math.floor((usableH + gapMm) / (photoHmm + gapMm)));
+    const perPage = Math.max(1, cols * rows);
+    const pages = Math.max(1, Math.ceil(quantity / perPage));
+    return {
+      page,
+      cols,
+      rows,
+      perPage,
+      pages,
+      maxCols,
+      usableW,
+      usableH,
+    };
+  }, [pageSize, marginMm, gapMm, photoWmm, photoHmm, autoColumns, manualColumns, quantity]);
+
+  const onSelectFile = async (picked) => {
+    setFile(picked);
+    setSourcePreview('');
+    setPreviewPage('');
+    if (!picked) return;
+    const src = await readAsDataUrl(picked);
+    setSourcePreview(src);
+    setStatus('Photo loaded. Configure layout and generate printable PDF.');
+    setTone('muted');
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    const drawPreview = async () => {
+      if (!sourcePreview) {
+        setPreviewPage('');
+        return;
+      }
+
+      const canvas = document.createElement('canvas');
+      const previewW = 620;
+      const previewH = Math.round(previewW * (layout.page.height / layout.page.width));
+      canvas.width = previewW;
+      canvas.height = previewH;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#d1d5db';
+      ctx.strokeRect(0.5, 0.5, canvas.width - 1, canvas.height - 1);
+
+      const scaleX = canvas.width / layout.page.width;
+      const scaleY = canvas.height / layout.page.height;
+
+      const cellW = photoWmm * scaleX;
+      const cellH = photoHmm * scaleY;
+      const gapX = gapMm * scaleX;
+      const gapY = gapMm * scaleY;
+      const marginX = marginMm * scaleX;
+      const marginY = marginMm * scaleY;
+
+      const image = await loadImage(sourcePreview);
+      for (let row = 0; row < layout.rows; row += 1) {
+        for (let col = 0; col < layout.cols; col += 1) {
+          const x = marginX + col * (cellW + gapX);
+          const y = marginY + row * (cellH + gapY);
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(x, y, cellW, cellH);
+          ctx.strokeStyle = '#94a3b8';
+          ctx.strokeRect(x, y, cellW, cellH);
+
+          const fit = fitContain(cellW, cellH, image.width, image.height);
+          ctx.drawImage(image, x + fit.xOffset, y + fit.yOffset, fit.width, fit.height);
+        }
+      }
+
+      if (!cancelled) {
+        setPreviewPage(canvas.toDataURL('image/jpeg', 0.9));
+      }
+    };
+
+    drawPreview();
+    return () => {
+      cancelled = true;
+    };
+  }, [sourcePreview, layout, gapMm, marginMm, photoWmm, photoHmm]);
+
+  const buildPdfBlob = async () => {
+    if (!file) {
+      throw new Error('Please select image first');
+    }
+
+    const pdf = await PDFDocument.create();
+    const imgDataUrl = await readAsDataUrl(file);
+    const image = file.type === 'image/png' ? await pdf.embedPng(imgDataUrl) : await pdf.embedJpg(imgDataUrl);
+    const imgRatio = image.width / image.height;
+
+    const pageSizePt = layout.page.points;
+    const marginPt = mmToPt(marginMm);
+    const gapPt = mmToPt(gapMm);
+    const slotWPt = mmToPt(photoWmm);
+    const slotHPt = mmToPt(photoHmm);
+
+    let placed = 0;
+    while (placed < quantity) {
+      const page = pdf.addPage(pageSizePt);
+      for (let row = 0; row < layout.rows; row += 1) {
+        for (let col = 0; col < layout.cols; col += 1) {
+          if (placed >= quantity) break;
+          const x = marginPt + col * (slotWPt + gapPt);
+          const topY = marginPt + row * (slotHPt + gapPt);
+          const y = page.getHeight() - topY - slotHPt;
+
+          const fit = fitContain(slotWPt, slotHPt, imgRatio, 1);
+          page.drawRectangle({ x, y, width: slotWPt, height: slotHPt, borderWidth: 0.4, borderColor: rgb(0.65, 0.69, 0.76) });
+          page.drawImage(image, {
+            x: x + fit.xOffset,
+            y: y + fit.yOffset,
+            width: fit.width,
+            height: fit.height,
+          });
+          placed += 1;
+        }
+      }
+    }
+
+    const bytes = await pdf.save({ useObjectStreams: true, addDefaultPage: false });
+    return new Blob([bytes], { type: 'application/pdf' });
+  };
+
+  const generateAndDownload = async () => {
+    if (!file) {
+      setTone('error');
+      setStatus('Please select a photo first.');
+      return;
+    }
+    try {
+      setBusy(true);
+      const blob = await buildPdfBlob();
+      downloadBlob(blob, randomFilename('print_photo_sheet', 'pdf'));
+      setTone('success');
+      setStatus(`PDF ready. ${layout.perPage} photos/page, ${layout.pages} page(s).`);
+    } catch {
+      setTone('error');
+      setStatus('Failed to generate print PDF.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const openForPrint = async () => {
+    if (!file) {
+      setTone('error');
+      setStatus('Please select a photo first.');
+      return;
+    }
+    try {
+      setBusy(true);
+      const blob = await buildPdfBlob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      setTone('success');
+      setStatus('Opened printable PDF preview in new tab.');
+    } catch {
+      setTone('error');
+      setStatus('Could not open print preview.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <ToolFrame title="Print Photo PDF" onBack={onBack}>
+      <SectionHeader
+        title="Passport Photo Print Sheet"
+        subtitle="Upload one photo, set size (default 35x45mm), choose quantity, and generate an auto-grid printable PDF."
+      />
+      <div className="row">
+        <FileInput accept="image/jpeg,image/png" onSelect={onSelectFile} label={file ? file.name : 'Select Photo'} />
+        <button className="btn" onClick={generateAndDownload} disabled={busy}>{busy ? 'Building...' : 'Download Print PDF'}</button>
+        <button className="btn alt" onClick={openForPrint} disabled={busy}>{busy ? 'Opening...' : 'Open Print Preview'}</button>
+      </div>
+
+      <FileInfoCard file={file} />
+
+      <div className="row" style={{ marginTop: 12, alignItems: 'end' }}>
+        <div style={{ width: 130 }}>
+          <label className="label">Page Size</label>
+          <select className="select" value={pageSize} onChange={(e) => setPageSize(e.target.value)}>
+            <option value="A4">A4</option>
+            <option value="LETTER">Letter</option>
+          </select>
+        </div>
+        <div style={{ width: 130 }}>
+          <label className="label">Photo W (mm)</label>
+          <input className="input" type="number" value={photoWmm} onChange={(e) => setPhotoWmm(Math.max(10, Number(e.target.value) || 35))} />
+        </div>
+        <div style={{ width: 130 }}>
+          <label className="label">Photo H (mm)</label>
+          <input className="input" type="number" value={photoHmm} onChange={(e) => setPhotoHmm(Math.max(10, Number(e.target.value) || 45))} />
+        </div>
+        <div style={{ width: 130 }}>
+          <label className="label">Quantity</label>
+          <input className="input" type="number" value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))} />
+        </div>
+        <div style={{ width: 130 }}>
+          <label className="label">Margin (mm)</label>
+          <input className="input" type="number" value={marginMm} onChange={(e) => setMarginMm(Math.max(0, Number(e.target.value) || 0))} />
+        </div>
+        <div style={{ width: 130 }}>
+          <label className="label">Gap (mm)</label>
+          <input className="input" type="number" value={gapMm} onChange={(e) => setGapMm(Math.max(0, Number(e.target.value) || 0))} />
+        </div>
+      </div>
+
+      <div className="row" style={{ marginTop: 10, alignItems: 'center' }}>
+        <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input type="checkbox" checked={autoColumns} onChange={(e) => setAutoColumns(e.target.checked)} />
+          Auto columns per row
+        </label>
+        {!autoColumns ? (
+          <div style={{ width: 180 }}>
+            <label className="label">Photos per row</label>
+            <input className="input" type="number" value={manualColumns} onChange={(e) => setManualColumns(Math.max(1, Number(e.target.value) || 1))} />
+          </div>
+        ) : null}
+      </div>
+
+      <div style={{ marginTop: 10 }}>
+        <span className="kpi" style={{ marginRight: 8 }}>{layout.cols} columns</span>
+        <span className="kpi" style={{ marginRight: 8 }}>{layout.rows} rows</span>
+        <span className="kpi" style={{ marginRight: 8 }}>{layout.perPage} photos/page</span>
+        <span className="kpi">{layout.pages} page(s) needed</span>
+      </div>
+
+      <div className="output-grid" style={{ marginTop: 12 }}>
+        <ImagePreview title="Photo Input" src={sourcePreview} />
+        <ImagePreview title="Page Layout Preview (Page 1)" src={previewPage} />
+      </div>
+
+      <Status message={status} tone={tone} />
+    </ToolFrame>
+  );
+}
+
 function EidPhotoEditor({ side, data, setData, targetWidthIn, targetHeightIn, ratio }) {
   const [busy, setBusy] = useState(false);
 
@@ -1708,6 +1990,8 @@ function renderTool(activeTool, onBack) {
       return <PdfPageStudioTool onBack={onBack} />;
     case 'compress-pdf':
       return <CompressPdfTool onBack={onBack} />;
+    case 'print-photo-pdf':
+      return <PrintPhotoPdfTool onBack={onBack} />;
     case 'eid-lamination':
       return <EidLaminationTool onBack={onBack} />;
     default:
