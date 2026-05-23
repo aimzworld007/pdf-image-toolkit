@@ -118,11 +118,11 @@ export default function Home() {
         <p>
           Developed By{' '}
           <a href="https://ainulislam.info" target="_blank" rel="noopener noreferrer">
-            Ainul islam (ainulislam.info)
+            Ainul islam
           </a>{' '}
           Powered By{' '}
           <a href="https://aimzit.xyz" target="_blank" rel="noopener noreferrer">
-            Aimz it (aimzit.xyz)
+            Aimz it
           </a>
         </p>
       </footer>
