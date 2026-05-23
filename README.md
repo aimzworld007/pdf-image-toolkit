@@ -7,12 +7,16 @@ A modern Next.js app for PDF and image utilities with no login/registration.
 - Merge Images
 - Compress JPG
 - Resize Image
+- Resize By File Size (target KB)
 - Crop Image
 - Image Converter (PNG/JPG)
+- Image Enhance (brightness/contrast/saturation/sharpness)
 - JPG to PDF
 - PDF to JPG
 - Combine PDFs & Images
 - Images to PDF
+- PDF Page Studio (remove/reorder/add blank/add image pages)
+- PDF Compress / Optimize
 - EID Lamination Tool (front/back high-DPI workflow + A4 export)
 
 ## Tech Stack

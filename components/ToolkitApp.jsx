@@ -21,8 +21,10 @@ const TOOL_SECTIONS = [
       { id: 'merge-images', label: 'Merge Images', desc: 'Join two images vertically or horizontally.' },
       { id: 'compress-jpg', label: 'Compress JPG', desc: 'Reduce JPG file size with quality slider.' },
       { id: 'resize-image', label: 'Resize Image', desc: 'Change dimensions and keep aspect ratio.' },
+      { id: 'resize-by-size', label: 'Resize By File Size', desc: 'Auto-fit JPG to target KB/MB size.' },
       { id: 'crop-image', label: 'Crop Image', desc: 'Crop using x/y/width/height controls.' },
       { id: 'convert-image', label: 'Image Converter', desc: 'Convert between JPG and PNG formats.' },
+      { id: 'enhance-image', label: 'Image Enhance', desc: 'Adjust brightness, contrast, saturation, and sharpness.' },
     ],
   },
   {
@@ -32,6 +34,8 @@ const TOOL_SECTIONS = [
       { id: 'pdf-to-jpg', label: 'PDF to JPG', desc: 'Extract all PDF pages to JPG images.' },
       { id: 'combine-pdfs', label: 'Combine PDFs & Images', desc: 'Reorder and merge PDFs/images into one PDF.' },
       { id: 'images-to-pdf', label: 'Images to PDF', desc: 'Combine many images into one PDF.' },
+      { id: 'pdf-page-studio', label: 'PDF Page Studio', desc: 'Remove/rearrange pages, add blank/image pages, and export.' },
+      { id: 'compress-pdf', label: 'Compress PDF', desc: 'Optimize PDF streams for smaller file size.' },
     ],
   },
   {
@@ -758,6 +762,514 @@ function ConvertImageTool({ onBack }) {
   );
 }
 
+function parsePageRanges(input, max) {
+  const selected = new Set();
+  if (!input || !input.trim()) return selected;
+
+  input.split(',').forEach((token) => {
+    const part = token.trim();
+    if (!part) return;
+    if (part.includes('-')) {
+      const [left, right] = part.split('-');
+      const start = Number(left);
+      const end = Number(right);
+      if (!Number.isFinite(start) || !Number.isFinite(end)) return;
+      const min = Math.max(1, Math.min(start, end));
+      const maxRange = Math.min(max, Math.max(start, end));
+      for (let p = min; p <= maxRange; p += 1) selected.add(p - 1);
+      return;
+    }
+    const n = Number(part);
+    if (Number.isFinite(n) && n >= 1 && n <= max) {
+      selected.add(n - 1);
+    }
+  });
+
+  return selected;
+}
+
+function applySharpenToCanvas(canvas, strength = 0) {
+  if (strength <= 0) return;
+  const ctx = canvas.getContext('2d');
+  const { width, height } = canvas;
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const src = imageData.data;
+  const out = new Uint8ClampedArray(src);
+  const kernel = [
+    0, -1, 0,
+    -1, 5, -1,
+    0, -1, 0,
+  ];
+  const passes = Math.min(3, Math.max(1, Math.round(strength)));
+
+  for (let pass = 0; pass < passes; pass += 1) {
+    for (let y = 1; y < height - 1; y += 1) {
+      for (let x = 1; x < width - 1; x += 1) {
+        const i = (y * width + x) * 4;
+        for (let c = 0; c < 3; c += 1) {
+          let sum = 0;
+          let k = 0;
+          for (let ky = -1; ky <= 1; ky += 1) {
+            for (let kx = -1; kx <= 1; kx += 1) {
+              const srcIdx = ((y + ky) * width + (x + kx)) * 4 + c;
+              sum += src[srcIdx] * kernel[k];
+              k += 1;
+            }
+          }
+          out[i + c] = Math.max(0, Math.min(255, sum));
+        }
+      }
+    }
+    src.set(out);
+  }
+
+  imageData.data.set(out);
+  ctx.putImageData(imageData, 0, 0);
+}
+
+function ImageEnhanceTool({ onBack }) {
+  const [file, setFile] = useState(null);
+  const [src, setSrc] = useState('');
+  const [result, setResult] = useState('');
+  const [brightness, setBrightness] = useState(100);
+  const [contrast, setContrast] = useState(100);
+  const [saturation, setSaturation] = useState(100);
+  const [sharpness, setSharpness] = useState(0);
+  const [status, setStatus] = useState('');
+  const [tone, setTone] = useState('muted');
+
+  const onFile = async (picked) => {
+    setFile(picked);
+    setResult('');
+    if (!picked) return;
+    const dataUrl = await readAsDataUrl(picked);
+    setSrc(dataUrl);
+    setStatus('Image loaded. Adjust controls and apply enhancements.');
+    setTone('muted');
+  };
+
+  const applyEnhance = async () => {
+    if (!src) {
+      setTone('error');
+      setStatus('Please select an image first.');
+      return;
+    }
+    const image = await loadImage(src);
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const ctx = canvas.getContext('2d');
+    ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
+    ctx.drawImage(image, 0, 0);
+    applySharpenToCanvas(canvas, sharpness);
+    setResult(canvas.toDataURL('image/jpeg', 0.95));
+    setTone('success');
+    setStatus('Enhancement applied.');
+  };
+
+  return (
+    <ToolFrame title="Image Enhance" onBack={onBack}>
+      <SectionHeader title="Enhance Photos" subtitle="Brightness, contrast, saturation, and sharpness controls." />
+      <div className="row">
+        <FileInput accept="image/*" onSelect={onFile} label={file ? file.name : 'Select Image'} />
+        <button className="btn" onClick={applyEnhance}>Apply Enhance</button>
+      </div>
+
+      <div className="row" style={{ marginTop: 12 }}>
+        <div style={{ minWidth: 190 }}>
+          <label className="label">Brightness: {brightness}%</label>
+          <input className="input" type="range" min="50" max="180" value={brightness} onChange={(e) => setBrightness(Number(e.target.value))} />
+        </div>
+        <div style={{ minWidth: 190 }}>
+          <label className="label">Contrast: {contrast}%</label>
+          <input className="input" type="range" min="50" max="180" value={contrast} onChange={(e) => setContrast(Number(e.target.value))} />
+        </div>
+        <div style={{ minWidth: 190 }}>
+          <label className="label">Saturation: {saturation}%</label>
+          <input className="input" type="range" min="0" max="200" value={saturation} onChange={(e) => setSaturation(Number(e.target.value))} />
+        </div>
+        <div style={{ minWidth: 190 }}>
+          <label className="label">Sharpness: {sharpness}</label>
+          <input className="input" type="range" min="0" max="3" step="1" value={sharpness} onChange={(e) => setSharpness(Number(e.target.value))} />
+        </div>
+      </div>
+
+      {(src || result) ? (
+        <div className="output-grid" style={{ marginTop: 12 }}>
+          {src ? (
+            <div>
+              <p className="label">Original</p>
+              <img src={src} alt="Original" className="thumb" style={{ width: '100%', height: 'auto' }} />
+            </div>
+          ) : null}
+          {result ? (
+            <div>
+              <p className="label">Enhanced</p>
+              <img src={result} alt="Enhanced" className="thumb" style={{ width: '100%', height: 'auto' }} />
+              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(result, randomFilename('enhanced', 'jpg'))}>Download Enhanced</button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      <Status message={status} tone={tone} />
+    </ToolFrame>
+  );
+}
+
+function ResizeBySizeTool({ onBack }) {
+  const [file, setFile] = useState(null);
+  const [targetKb, setTargetKb] = useState(300);
+  const [result, setResult] = useState('');
+  const [status, setStatus] = useState('');
+  const [tone, setTone] = useState('muted');
+  const [busy, setBusy] = useState(false);
+
+  const resizeToTarget = async () => {
+    if (!file) {
+      setTone('error');
+      setStatus('Please select an image first.');
+      return;
+    }
+    if (targetKb <= 10) {
+      setTone('error');
+      setStatus('Target size must be above 10 KB.');
+      return;
+    }
+
+    try {
+      setBusy(true);
+      const targetBytes = targetKb * 1024;
+      const image = await loadImage(await readAsDataUrl(file));
+      let scale = 1;
+      let best = '';
+      let bestBytes = Number.MAX_SAFE_INTEGER;
+
+      while (scale >= 0.25) {
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        let low = 0.2;
+        let high = 0.95;
+        let passBest = '';
+        let passBestBytes = Number.MAX_SAFE_INTEGER;
+
+        for (let i = 0; i < 8; i += 1) {
+          const mid = (low + high) / 2;
+          const url = canvas.toDataURL('image/jpeg', mid);
+          const bytes = Math.round(url.length * 0.75);
+          if (bytes < passBestBytes) {
+            passBest = url;
+            passBestBytes = bytes;
+          }
+          if (bytes > targetBytes) high = mid;
+          else low = mid;
+        }
+
+        if (passBestBytes < bestBytes) {
+          best = passBest;
+          bestBytes = passBestBytes;
+        }
+
+        if (passBestBytes <= targetBytes) break;
+        scale -= 0.1;
+      }
+
+      setResult(best);
+      setTone('success');
+      setStatus(`Result size: ${(bestBytes / 1024).toFixed(1)} KB (target: ${targetKb} KB).`);
+    } catch {
+      setTone('error');
+      setStatus('Could not resize by target file size.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <ToolFrame title="Resize By File Size" onBack={onBack}>
+      <SectionHeader title="Target Size Compressor" subtitle="Auto-adjust dimensions and quality to hit a target size." />
+      <div className="row" style={{ alignItems: 'end' }}>
+        <FileInput accept="image/*" onSelect={setFile} label={file ? file.name : 'Select Image'} />
+        <div style={{ width: 180 }}>
+          <label className="label">Target (KB)</label>
+          <input className="input" type="number" value={targetKb} onChange={(e) => setTargetKb(Number(e.target.value) || 0)} />
+        </div>
+        <button className="btn" onClick={resizeToTarget} disabled={busy}>{busy ? 'Processing...' : 'Resize By Size'}</button>
+      </div>
+      {result ? (
+        <div style={{ marginTop: 12 }}>
+          <img src={result} alt="Size resized" className="thumb" style={{ width: '100%', maxWidth: 400, height: 'auto' }} />
+          <div style={{ marginTop: 8 }}>
+            <button className="btn alt" onClick={() => downloadDataUrl(result, randomFilename('resized_target', 'jpg'))}>Download Result</button>
+          </div>
+        </div>
+      ) : null}
+      <Status message={status} tone={tone} />
+    </ToolFrame>
+  );
+}
+
+function PdfPageStudioTool({ onBack }) {
+  const [file, setFile] = useState(null);
+  const [sourceBytes, setSourceBytes] = useState(null);
+  const [items, setItems] = useState([]);
+  const [removeInput, setRemoveInput] = useState('');
+  const [blankPreset, setBlankPreset] = useState('A4');
+  const [blankWmm, setBlankWmm] = useState(210);
+  const [blankHmm, setBlankHmm] = useState(297);
+  const [status, setStatus] = useState('');
+  const [tone, setTone] = useState('muted');
+  const [busy, setBusy] = useState(false);
+
+  const loadPdf = async (picked) => {
+    setFile(picked);
+    setItems([]);
+    setSourceBytes(null);
+    if (!picked) return;
+
+    try {
+      setBusy(true);
+      setStatus('Reading PDF pages...');
+      const raw = await readAsArrayBuffer(picked);
+      setSourceBytes(raw);
+      const pdfjsLib = await ensurePdfJs();
+      const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(raw) }).promise;
+      const loaded = [];
+
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        const page = await pdf.getPage(pageNumber);
+        const viewport = page.getViewport({ scale: 0.35 });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        loaded.push({
+          id: `pdf_${pageNumber}_${Date.now()}`,
+          kind: 'pdf',
+          pageIndex: pageNumber - 1,
+          label: `Page ${pageNumber}`,
+          preview: canvas.toDataURL('image/jpeg', 0.8),
+        });
+      }
+
+      setItems(loaded);
+      setTone('success');
+      setStatus(`Loaded ${loaded.length} page(s). You can now reorder/remove/add pages.`);
+    } catch {
+      setTone('error');
+      setStatus('Failed to load PDF pages.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removePagesByInput = () => {
+    const totalPdfPages = items.filter((item) => item.kind === 'pdf').length;
+    const selected = parsePageRanges(removeInput, totalPdfPages);
+    if (!selected.size) {
+      setTone('error');
+      setStatus('No valid page numbers found in the remove input.');
+      return;
+    }
+
+    let ordinal = -1;
+    setItems((prev) => prev.filter((item) => {
+      if (item.kind !== 'pdf') return true;
+      ordinal += 1;
+      return !selected.has(ordinal);
+    }));
+    setTone('success');
+    setStatus(`Removed ${selected.size} page(s) from the queue.`);
+  };
+
+  const addBlankPage = () => {
+    let size = PageSizes.A4;
+    if (blankPreset === 'LETTER') size = PageSizes.Letter;
+    if (blankPreset === 'CUSTOM') size = [mmToPt(blankWmm), mmToPt(blankHmm)];
+
+    setItems((prev) => [
+      ...prev,
+      {
+        id: `blank_${Date.now()}`,
+        kind: 'blank',
+        width: size[0],
+        height: size[1],
+        label: `Blank ${blankPreset}`,
+        preview: '',
+      },
+    ]);
+    setTone('success');
+    setStatus('Blank page added.');
+  };
+
+  const addImagePages = async (files) => {
+    const entries = await Promise.all(
+      (files || []).map(async (img, index) => ({
+        id: `img_${Date.now()}_${index}`,
+        kind: 'image',
+        file: img,
+        label: img.name,
+        preview: await readAsDataUrl(img),
+      }))
+    );
+    setItems((prev) => [...prev, ...entries]);
+    setTone('success');
+    setStatus(`${entries.length} image page(s) added.`);
+  };
+
+  const moveItem = (from, to) => {
+    if (to < 0 || to >= items.length) return;
+    setItems((prev) => reorderByDrag(prev, from, to));
+  };
+
+  const exportEditedPdf = async () => {
+    if (!sourceBytes || !items.length) {
+      setTone('error');
+      setStatus('Please load a PDF and keep at least one page/item in queue.');
+      return;
+    }
+    try {
+      setBusy(true);
+      setStatus('Building edited PDF...');
+      const finalPdf = await PDFDocument.create();
+      const sourcePdf = await PDFDocument.load(sourceBytes, { ignoreEncryption: true });
+
+      for (const item of items) {
+        if (item.kind === 'pdf') {
+          const [copied] = await finalPdf.copyPages(sourcePdf, [item.pageIndex]);
+          finalPdf.addPage(copied);
+        } else if (item.kind === 'blank') {
+          finalPdf.addPage([item.width, item.height]);
+        } else if (item.kind === 'image') {
+          const { image } = await embedImageFromFile(finalPdf, item.file);
+          const page = finalPdf.addPage([image.width, image.height]);
+          page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
+        }
+      }
+
+      const bytes = await finalPdf.save({ useObjectStreams: true, addDefaultPage: false });
+      downloadBlob(new Blob([bytes], { type: 'application/pdf' }), randomFilename('edited_pdf', 'pdf'));
+      setTone('success');
+      setStatus('Edited PDF exported.');
+    } catch {
+      setTone('error');
+      setStatus('Failed to export edited PDF.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <ToolFrame title="PDF Page Studio" onBack={onBack}>
+      <SectionHeader title="Page Editing Suite" subtitle="Remove, reorder, insert blank pages, add image pages, and export." />
+      <div className="row">
+        <FileInput accept="application/pdf" onSelect={loadPdf} label={file ? file.name : 'Load PDF'} />
+        <FileInput accept="image/*" multiple onSelect={addImagePages} label="Add Image Pages" />
+        <button className="btn alt" onClick={exportEditedPdf} disabled={busy}>{busy ? 'Exporting...' : 'Export Edited PDF'}</button>
+      </div>
+
+      <div className="row" style={{ marginTop: 10, alignItems: 'end' }}>
+        <div style={{ width: 230 }}>
+          <label className="label">Remove PDF pages (e.g. 2,4-6)</label>
+          <input className="input" value={removeInput} onChange={(e) => setRemoveInput(e.target.value)} />
+        </div>
+        <button className="btn danger" onClick={removePagesByInput}>Remove Pages</button>
+      </div>
+
+      <div className="row" style={{ marginTop: 10, alignItems: 'end' }}>
+        <div style={{ width: 180 }}>
+          <label className="label">Blank Page Size</label>
+          <select className="select" value={blankPreset} onChange={(e) => setBlankPreset(e.target.value)}>
+            <option value="A4">A4</option>
+            <option value="LETTER">Letter</option>
+            <option value="CUSTOM">Custom (mm)</option>
+          </select>
+        </div>
+        {blankPreset === 'CUSTOM' ? (
+          <>
+            <div style={{ width: 140 }}>
+              <label className="label">Width (mm)</label>
+              <input className="input" type="number" value={blankWmm} onChange={(e) => setBlankWmm(Number(e.target.value) || 0)} />
+            </div>
+            <div style={{ width: 140 }}>
+              <label className="label">Height (mm)</label>
+              <input className="input" type="number" value={blankHmm} onChange={(e) => setBlankHmm(Number(e.target.value) || 0)} />
+            </div>
+          </>
+        ) : null}
+        <button className="btn" onClick={addBlankPage}>Add Blank Page</button>
+      </div>
+
+      <div className="file-list">
+        {items.map((item, index) => (
+          <div key={item.id} className="file-item">
+            {item.preview ? <img className="thumb" src={item.preview} alt={item.label} /> : <div className="thumb" style={{ display: 'grid', placeItems: 'center' }}>{item.kind.toUpperCase()}</div>}
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600 }}>{item.label}</div>
+              <small style={{ color: 'var(--muted)' }}>#{index + 1} in output order</small>
+            </div>
+            <button className="btn ghost" onClick={() => moveItem(index, index - 1)}>Up</button>
+            <button className="btn ghost" onClick={() => moveItem(index, index + 1)}>Down</button>
+            <button className="btn danger" onClick={() => setItems((prev) => prev.filter((x) => x.id !== item.id))}>Remove</button>
+          </div>
+        ))}
+      </div>
+
+      <Status message={status} tone={tone} />
+    </ToolFrame>
+  );
+}
+
+function CompressPdfTool({ onBack }) {
+  const [file, setFile] = useState(null);
+  const [status, setStatus] = useState('');
+  const [tone, setTone] = useState('muted');
+  const [busy, setBusy] = useState(false);
+
+  const compress = async () => {
+    if (!file) {
+      setTone('error');
+      setStatus('Please select a PDF file.');
+      return;
+    }
+    try {
+      setBusy(true);
+      const originalBytes = await readAsArrayBuffer(file);
+      const pdfDoc = await PDFDocument.load(originalBytes, { ignoreEncryption: true });
+      const optimizedBytes = await pdfDoc.save({
+        useObjectStreams: true,
+        addDefaultPage: false,
+        updateFieldAppearances: false,
+      });
+
+      downloadBlob(new Blob([optimizedBytes], { type: 'application/pdf' }), randomFilename('compressed_pdf', 'pdf'));
+      const oldKb = (originalBytes.byteLength / 1024).toFixed(1);
+      const newKb = (optimizedBytes.byteLength / 1024).toFixed(1);
+      setTone('success');
+      setStatus(`Compressed PDF exported. Size: ${oldKb} KB -> ${newKb} KB.`);
+    } catch {
+      setTone('error');
+      setStatus('Failed to compress/optimize this PDF.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <ToolFrame title="Compress PDF" onBack={onBack}>
+      <SectionHeader title="PDF Optimizer" subtitle="Re-save PDF with stream optimization." />
+      <div className="row">
+        <FileInput accept="application/pdf" onSelect={setFile} label={file ? file.name : 'Select PDF'} />
+        <button className="btn alt" onClick={compress} disabled={busy}>{busy ? 'Compressing...' : 'Compress & Download'}</button>
+      </div>
+      <Status message={status} tone={tone} />
+    </ToolFrame>
+  );
+}
+
 function EidPhotoEditor({ side, data, setData, targetWidthIn, targetHeightIn, ratio }) {
   const [busy, setBusy] = useState(false);
 
@@ -988,12 +1500,20 @@ function renderTool(activeTool, onBack) {
       return <CompressJpgTool onBack={onBack} />;
     case 'resize-image':
       return <ResizeImageTool onBack={onBack} />;
+    case 'resize-by-size':
+      return <ResizeBySizeTool onBack={onBack} />;
     case 'crop-image':
       return <CropImageTool onBack={onBack} />;
     case 'merge-images':
       return <MergeImagesTool onBack={onBack} />;
     case 'convert-image':
       return <ConvertImageTool onBack={onBack} />;
+    case 'enhance-image':
+      return <ImageEnhanceTool onBack={onBack} />;
+    case 'pdf-page-studio':
+      return <PdfPageStudioTool onBack={onBack} />;
+    case 'compress-pdf':
+      return <CompressPdfTool onBack={onBack} />;
     case 'eid-lamination':
       return <EidLaminationTool onBack={onBack} />;
     default:
