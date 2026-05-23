@@ -73,6 +73,41 @@ function Status({ message, tone = 'muted' }) {
   return <p className={className}>{message}</p>;
 }
 
+function formatBytes(bytes = 0) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function FileInfoCard({ file, extras = [] }) {
+  if (!file) return null;
+  return (
+    <div className="panel" style={{ padding: 12, marginTop: 12 }}>
+      <p style={{ margin: 0, fontWeight: 700 }}>{file.name}</p>
+      <p style={{ margin: '6px 0 0', color: 'var(--muted)' }}>
+        {file.type || 'unknown'} • {formatBytes(file.size)}
+      </p>
+      {extras.length ? (
+        <div style={{ marginTop: 8 }}>
+          {extras.map((item) => (
+            <span key={item} className="kpi" style={{ marginRight: 8 }}>{item}</span>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ImagePreview({ title, src }) {
+  if (!src) return null;
+  return (
+    <div>
+      <p className="label">{title}</p>
+      <img src={src} alt={title} className="thumb" style={{ width: '100%', height: 'auto' }} />
+    </div>
+  );
+}
+
 function FileInput({ accept, multiple = false, onSelect, label = 'Choose File(s)' }) {
   return (
     <label className="btn ghost" style={{ display: 'inline-block' }}>
@@ -111,11 +146,37 @@ async function embedImageFromFile(pdfDoc, file) {
   return { image: await pdfDoc.embedPng(pngUrl), ext: 'png' };
 }
 
+async function getPdfQuickPreview(file, scale = 0.5) {
+  const pdfjsLib = await ensurePdfJs();
+  const raw = await readAsArrayBuffer(file);
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(raw) }).promise;
+  const page = await pdf.getPage(1);
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+  return {
+    preview: canvas.toDataURL('image/jpeg', 0.85),
+    pageCount: pdf.numPages,
+  };
+}
+
 function JpgToPdfTool({ onBack }) {
   const [file, setFile] = useState(null);
+  const [inputPreview, setInputPreview] = useState('');
   const [status, setStatus] = useState('');
   const [tone, setTone] = useState('muted');
   const [busy, setBusy] = useState(false);
+
+  const onSelectFile = async (picked) => {
+    setFile(picked);
+    setInputPreview('');
+    setStatus('');
+    setTone('muted');
+    if (!picked) return;
+    setInputPreview(await readAsDataUrl(picked));
+  };
 
   const convert = async () => {
     if (!file) {
@@ -146,9 +207,15 @@ function JpgToPdfTool({ onBack }) {
     <ToolFrame title="JPG To PDF" onBack={onBack}>
       <SectionHeader title="Single JPG to PDF" subtitle="Upload one JPG and download a PDF in original dimensions." />
       <div className="row">
-        <FileInput accept="image/jpeg" onSelect={setFile} label={file ? file.name : 'Select JPG'} />
+        <FileInput accept="image/jpeg" onSelect={onSelectFile} label={file ? file.name : 'Select JPG'} />
         <button className="btn" onClick={convert} disabled={busy}>{busy ? 'Converting...' : 'Convert & Download'}</button>
       </div>
+      <FileInfoCard file={file} />
+      {inputPreview ? (
+        <div className="output-grid" style={{ marginTop: 12 }}>
+          <ImagePreview title="Input Preview" src={inputPreview} />
+        </div>
+      ) : null}
       <Status message={status} tone={tone} />
     </ToolFrame>
   );
@@ -156,10 +223,30 @@ function JpgToPdfTool({ onBack }) {
 
 function PdfToJpgTool({ onBack }) {
   const [file, setFile] = useState(null);
+  const [inputPreview, setInputPreview] = useState('');
+  const [pageCount, setPageCount] = useState(0);
   const [images, setImages] = useState([]);
   const [status, setStatus] = useState('');
   const [tone, setTone] = useState('muted');
   const [busy, setBusy] = useState(false);
+
+  const onSelectFile = async (picked) => {
+    setFile(picked);
+    setImages([]);
+    setInputPreview('');
+    setPageCount(0);
+    setStatus('');
+    setTone('muted');
+    if (!picked) return;
+    try {
+      const info = await getPdfQuickPreview(picked, 0.45);
+      setInputPreview(info.preview);
+      setPageCount(info.pageCount);
+    } catch {
+      setTone('error');
+      setStatus('PDF loaded but preview could not be generated.');
+    }
+  };
 
   const convert = async () => {
     if (!file) {
@@ -208,9 +295,15 @@ function PdfToJpgTool({ onBack }) {
     <ToolFrame title="PDF To JPG" onBack={onBack}>
       <SectionHeader title="Extract Pages As JPG" subtitle="Each page becomes a downloadable image." />
       <div className="row">
-        <FileInput accept="application/pdf" onSelect={setFile} label={file ? file.name : 'Select PDF'} />
+        <FileInput accept="application/pdf" onSelect={onSelectFile} label={file ? file.name : 'Select PDF'} />
         <button className="btn" onClick={convert} disabled={busy}>{busy ? 'Processing...' : 'Convert'}</button>
       </div>
+      <FileInfoCard file={file} extras={pageCount ? [`${pageCount} pages`] : []} />
+      {inputPreview ? (
+        <div className="output-grid" style={{ marginTop: 12 }}>
+          <ImagePreview title="PDF First Page Preview" src={inputPreview} />
+        </div>
+      ) : null}
       <Status message={status} tone={tone} />
       {images.length > 0 ? (
         <div className="output-grid" style={{ marginTop: 14 }}>
@@ -422,6 +515,7 @@ function ImagesToPdfTool({ onBack }) {
 
 function CompressJpgTool({ onBack }) {
   const [file, setFile] = useState(null);
+  const [originalPreview, setOriginalPreview] = useState('');
   const [quality, setQuality] = useState(0.8);
   const [preview, setPreview] = useState('');
   const [status, setStatus] = useState('');
@@ -445,23 +539,35 @@ function CompressJpgTool({ onBack }) {
     setStatus(`Original: ${(file.size / 1024).toFixed(1)} KB. Estimated new: ${(url.length * 0.75 / 1024).toFixed(1)} KB.`);
   };
 
+  const onSelectFile = async (picked) => {
+    setFile(picked);
+    setPreview('');
+    setOriginalPreview('');
+    if (!picked) return;
+    setOriginalPreview(await readAsDataUrl(picked));
+  };
+
   return (
     <ToolFrame title="Compress JPG" onBack={onBack}>
       <SectionHeader title="JPG Compressor" subtitle="Client-side quality-based compression." />
       <div className="row" style={{ alignItems: 'center' }}>
-        <FileInput accept="image/jpeg" onSelect={setFile} label={file ? file.name : 'Select JPG'} />
+        <FileInput accept="image/jpeg" onSelect={onSelectFile} label={file ? file.name : 'Select JPG'} />
         <div style={{ minWidth: 220 }}>
           <label className="label">Quality: {quality.toFixed(1)}</label>
           <input className="input" type="range" min="0.1" max="1" step="0.1" value={quality} onChange={(e) => setQuality(Number(e.target.value))} />
         </div>
         <button className="btn" onClick={compress}>Compress</button>
       </div>
+      <FileInfoCard file={file} />
 
-      {preview ? (
-        <div style={{ marginTop: 12 }}>
-          <img className="thumb" style={{ width: '100%', maxWidth: 360, height: 'auto' }} src={preview} alt="Compressed preview" />
-          <div style={{ marginTop: 8 }}>
-            <button className="btn alt" onClick={() => downloadDataUrl(preview, randomFilename('compressed', 'jpg'))}>Download JPG</button>
+      {(originalPreview || preview) ? (
+        <div className="output-grid" style={{ marginTop: 12 }}>
+          <ImagePreview title="Original" src={originalPreview} />
+          <div>
+            <ImagePreview title="Compressed" src={preview} />
+            {preview ? (
+              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(preview, randomFilename('compressed', 'jpg'))}>Download JPG</button>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -473,6 +579,7 @@ function CompressJpgTool({ onBack }) {
 
 function ResizeImageTool({ onBack }) {
   const [file, setFile] = useState(null);
+  const [originalPreview, setOriginalPreview] = useState('');
   const [width, setWidth] = useState('');
   const [height, setHeight] = useState('');
   const [ratio, setRatio] = useState(null);
@@ -484,8 +591,11 @@ function ResizeImageTool({ onBack }) {
   const onFile = async (picked) => {
     setFile(picked);
     setPreview('');
+    setOriginalPreview('');
     if (!picked) return;
-    const image = await loadImage(await readAsDataUrl(picked));
+    const src = await readAsDataUrl(picked);
+    setOriginalPreview(src);
+    const image = await loadImage(src);
     setWidth(String(image.width));
     setHeight(String(image.height));
     setRatio(image.width / image.height);
@@ -550,12 +660,16 @@ function ResizeImageTool({ onBack }) {
         </label>
         <button className="btn" onClick={resize}>Resize</button>
       </div>
+      <FileInfoCard file={file} />
 
-      {preview ? (
-        <div style={{ marginTop: 12 }}>
-          <img className="thumb" style={{ width: '100%', maxWidth: 360, height: 'auto' }} src={preview} alt="Resized preview" />
-          <div style={{ marginTop: 8 }}>
-            <button className="btn alt" onClick={() => downloadDataUrl(preview, randomFilename('resized', (file.type || 'image/png').split('/')[1] || 'png'))}>Download</button>
+      {(originalPreview || preview) ? (
+        <div className="output-grid" style={{ marginTop: 12 }}>
+          <ImagePreview title="Original" src={originalPreview} />
+          <div>
+            <ImagePreview title="Resized" src={preview} />
+            {preview ? (
+              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(preview, randomFilename('resized', (file.type || 'image/png').split('/')[1] || 'png'))}>Download</button>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -641,6 +755,8 @@ function CropImageTool({ onBack }) {
 function MergeImagesTool({ onBack }) {
   const [fileA, setFileA] = useState(null);
   const [fileB, setFileB] = useState(null);
+  const [previewA, setPreviewA] = useState('');
+  const [previewB, setPreviewB] = useState('');
   const [vertical, setVertical] = useState('');
   const [horizontal, setHorizontal] = useState('');
   const [status, setStatus] = useState('');
@@ -673,13 +789,35 @@ function MergeImagesTool({ onBack }) {
     setStatus('Generated both merge layouts.');
   };
 
+  const onSelectA = async (picked) => {
+    setFileA(picked);
+    setVertical('');
+    setHorizontal('');
+    setPreviewA('');
+    if (!picked) return;
+    setPreviewA(await readAsDataUrl(picked));
+  };
+
+  const onSelectB = async (picked) => {
+    setFileB(picked);
+    setVertical('');
+    setHorizontal('');
+    setPreviewB('');
+    if (!picked) return;
+    setPreviewB(await readAsDataUrl(picked));
+  };
+
   return (
     <ToolFrame title="Merge Images" onBack={onBack}>
       <SectionHeader title="Two-Image Merger" subtitle="Generate both vertical and horizontal versions." />
       <div className="row">
-        <FileInput accept="image/*" onSelect={setFileA} label={fileA ? fileA.name : 'Select Image 1'} />
-        <FileInput accept="image/*" onSelect={setFileB} label={fileB ? fileB.name : 'Select Image 2'} />
+        <FileInput accept="image/*" onSelect={onSelectA} label={fileA ? fileA.name : 'Select Image 1'} />
+        <FileInput accept="image/*" onSelect={onSelectB} label={fileB ? fileB.name : 'Select Image 2'} />
         <button className="btn" onClick={generate}>Generate</button>
+      </div>
+      <div className="output-grid" style={{ marginTop: 12 }}>
+        <ImagePreview title="Input Image 1" src={previewA} />
+        <ImagePreview title="Input Image 2" src={previewB} />
       </div>
 
       <Status message={status} tone={tone} />
@@ -706,6 +844,7 @@ function MergeImagesTool({ onBack }) {
 
 function ConvertImageTool({ onBack }) {
   const [file, setFile] = useState(null);
+  const [originalPreview, setOriginalPreview] = useState('');
   const [format, setFormat] = useState('png');
   const [result, setResult] = useState('');
   const [status, setStatus] = useState('');
@@ -736,23 +875,35 @@ function ConvertImageTool({ onBack }) {
     setStatus(`Image converted to ${format.toUpperCase()}.`);
   };
 
+  const onSelectFile = async (picked) => {
+    setFile(picked);
+    setOriginalPreview('');
+    setResult('');
+    if (!picked) return;
+    setOriginalPreview(await readAsDataUrl(picked));
+  };
+
   return (
     <ToolFrame title="Image Converter" onBack={onBack}>
       <SectionHeader title="Convert PNG/JPG" subtitle="Switch formats quickly, fully client-side." />
       <div className="row" style={{ alignItems: 'center' }}>
-        <FileInput accept="image/*" onSelect={setFile} label={file ? file.name : 'Select Image'} />
+        <FileInput accept="image/*" onSelect={onSelectFile} label={file ? file.name : 'Select Image'} />
         <select className="select" value={format} onChange={(e) => setFormat(e.target.value)} style={{ maxWidth: 140 }}>
           <option value="png">PNG</option>
           <option value="jpeg">JPG</option>
         </select>
         <button className="btn" onClick={convert}>Convert</button>
       </div>
+      <FileInfoCard file={file} />
 
-      {result ? (
-        <div style={{ marginTop: 12 }}>
-          <img src={result} alt="Converted" className="thumb" style={{ width: '100%', maxWidth: 360, height: 'auto' }} />
-          <div style={{ marginTop: 8 }}>
-            <button className="btn alt" onClick={() => downloadDataUrl(result, randomFilename('converted', format === 'jpeg' ? 'jpg' : 'png'))}>Download</button>
+      {(originalPreview || result) ? (
+        <div className="output-grid" style={{ marginTop: 12 }}>
+          <ImagePreview title="Original" src={originalPreview} />
+          <div>
+            <ImagePreview title="Converted" src={result} />
+            {result ? (
+              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(result, randomFilename('converted', format === 'jpeg' ? 'jpg' : 'png'))}>Download</button>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -874,6 +1025,7 @@ function ImageEnhanceTool({ onBack }) {
         <FileInput accept="image/*" onSelect={onFile} label={file ? file.name : 'Select Image'} />
         <button className="btn" onClick={applyEnhance}>Apply Enhance</button>
       </div>
+      <FileInfoCard file={file} />
 
       <div className="row" style={{ marginTop: 12 }}>
         <div style={{ minWidth: 190 }}>
@@ -919,6 +1071,7 @@ function ImageEnhanceTool({ onBack }) {
 
 function ResizeBySizeTool({ onBack }) {
   const [file, setFile] = useState(null);
+  const [originalPreview, setOriginalPreview] = useState('');
   const [targetKb, setTargetKb] = useState(300);
   const [result, setResult] = useState('');
   const [status, setStatus] = useState('');
@@ -988,22 +1141,34 @@ function ResizeBySizeTool({ onBack }) {
     }
   };
 
+  const onSelectFile = async (picked) => {
+    setFile(picked);
+    setResult('');
+    setOriginalPreview('');
+    if (!picked) return;
+    setOriginalPreview(await readAsDataUrl(picked));
+  };
+
   return (
     <ToolFrame title="Resize By File Size" onBack={onBack}>
       <SectionHeader title="Target Size Compressor" subtitle="Auto-adjust dimensions and quality to hit a target size." />
       <div className="row" style={{ alignItems: 'end' }}>
-        <FileInput accept="image/*" onSelect={setFile} label={file ? file.name : 'Select Image'} />
+        <FileInput accept="image/*" onSelect={onSelectFile} label={file ? file.name : 'Select Image'} />
         <div style={{ width: 180 }}>
           <label className="label">Target (KB)</label>
           <input className="input" type="number" value={targetKb} onChange={(e) => setTargetKb(Number(e.target.value) || 0)} />
         </div>
         <button className="btn" onClick={resizeToTarget} disabled={busy}>{busy ? 'Processing...' : 'Resize By Size'}</button>
       </div>
-      {result ? (
-        <div style={{ marginTop: 12 }}>
-          <img src={result} alt="Size resized" className="thumb" style={{ width: '100%', maxWidth: 400, height: 'auto' }} />
-          <div style={{ marginTop: 8 }}>
-            <button className="btn alt" onClick={() => downloadDataUrl(result, randomFilename('resized_target', 'jpg'))}>Download Result</button>
+      <FileInfoCard file={file} />
+      {(originalPreview || result) ? (
+        <div className="output-grid" style={{ marginTop: 12 }}>
+          <ImagePreview title="Original" src={originalPreview} />
+          <div>
+            <ImagePreview title="Resized To Target Size" src={result} />
+            {result ? (
+              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(result, randomFilename('resized_target', 'jpg'))}>Download Result</button>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -1015,6 +1180,7 @@ function ResizeBySizeTool({ onBack }) {
 function PdfPageStudioTool({ onBack }) {
   const [file, setFile] = useState(null);
   const [sourceBytes, setSourceBytes] = useState(null);
+  const [sourcePageCount, setSourcePageCount] = useState(0);
   const [items, setItems] = useState([]);
   const [removeInput, setRemoveInput] = useState('');
   const [blankPreset, setBlankPreset] = useState('A4');
@@ -1028,6 +1194,7 @@ function PdfPageStudioTool({ onBack }) {
     setFile(picked);
     setItems([]);
     setSourceBytes(null);
+    setSourcePageCount(0);
     if (!picked) return;
 
     try {
@@ -1056,6 +1223,7 @@ function PdfPageStudioTool({ onBack }) {
       }
 
       setItems(loaded);
+      setSourcePageCount(loaded.length);
       setTone('success');
       setStatus(`Loaded ${loaded.length} page(s). You can now reorder/remove/add pages.`);
     } catch {
@@ -1170,6 +1338,7 @@ function PdfPageStudioTool({ onBack }) {
         <FileInput accept="image/*" multiple onSelect={addImagePages} label="Add Image Pages" />
         <button className="btn alt" onClick={exportEditedPdf} disabled={busy}>{busy ? 'Exporting...' : 'Export Edited PDF'}</button>
       </div>
+      <FileInfoCard file={file} extras={sourcePageCount ? [`${sourcePageCount} pages`] : []} />
 
       <div className="row" style={{ marginTop: 10, alignItems: 'end' }}>
         <div style={{ width: 230 }}>
@@ -1225,9 +1394,28 @@ function PdfPageStudioTool({ onBack }) {
 
 function CompressPdfTool({ onBack }) {
   const [file, setFile] = useState(null);
+  const [inputPreview, setInputPreview] = useState('');
+  const [pageCount, setPageCount] = useState(0);
   const [status, setStatus] = useState('');
   const [tone, setTone] = useState('muted');
   const [busy, setBusy] = useState(false);
+
+  const onSelectFile = async (picked) => {
+    setFile(picked);
+    setInputPreview('');
+    setPageCount(0);
+    setStatus('');
+    setTone('muted');
+    if (!picked) return;
+    try {
+      const info = await getPdfQuickPreview(picked, 0.45);
+      setInputPreview(info.preview);
+      setPageCount(info.pageCount);
+    } catch {
+      setTone('error');
+      setStatus('PDF selected, but preview generation failed.');
+    }
+  };
 
   const compress = async () => {
     if (!file) {
@@ -1262,9 +1450,15 @@ function CompressPdfTool({ onBack }) {
     <ToolFrame title="Compress PDF" onBack={onBack}>
       <SectionHeader title="PDF Optimizer" subtitle="Re-save PDF with stream optimization." />
       <div className="row">
-        <FileInput accept="application/pdf" onSelect={setFile} label={file ? file.name : 'Select PDF'} />
+        <FileInput accept="application/pdf" onSelect={onSelectFile} label={file ? file.name : 'Select PDF'} />
         <button className="btn alt" onClick={compress} disabled={busy}>{busy ? 'Compressing...' : 'Compress & Download'}</button>
       </div>
+      <FileInfoCard file={file} extras={pageCount ? [`${pageCount} pages`] : []} />
+      {inputPreview ? (
+        <div className="output-grid" style={{ marginTop: 12 }}>
+          <ImagePreview title="PDF First Page Preview" src={inputPreview} />
+        </div>
+      ) : null}
       <Status message={status} tone={tone} />
     </ToolFrame>
   );
