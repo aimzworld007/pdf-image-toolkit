@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { PDFDocument, PageSizes, rgb } from 'pdf-lib';
 import {
   downloadBlob,
@@ -31,6 +31,7 @@ const TOOL_SECTIONS = [
     title: 'PDF Tools',
     items: [
       { id: 'jpg-to-pdf', label: 'JPG to PDF', desc: 'Convert one JPG image to PDF.' },
+      { id: 'pdf-workbench', label: 'PDF Workbench', desc: 'Tabbed PDF studio like online converter layout.' },
       { id: 'pdf-to-jpg', label: 'PDF to JPG', desc: 'Extract all PDF pages to JPG images.' },
       { id: 'combine-pdfs', label: 'Combine PDFs & Images', desc: 'Reorder and merge PDFs/images into one PDF.' },
       { id: 'images-to-pdf', label: 'Images to PDF', desc: 'Combine many images into one PDF.' },
@@ -74,6 +75,23 @@ function Status({ message, tone = 'muted' }) {
   return <p className={className}>{message}</p>;
 }
 
+function isAcceptedFile(file, accept) {
+  if (!accept) return true;
+  const rules = accept.split(',').map((item) => item.trim()).filter(Boolean);
+  if (!rules.length) return true;
+  return rules.some((rule) => {
+    if (rule === '*/*') return true;
+    if (rule.endsWith('/*')) {
+      const family = rule.slice(0, -1);
+      return file.type.startsWith(family);
+    }
+    if (rule.startsWith('.')) {
+      return file.name.toLowerCase().endsWith(rule.toLowerCase());
+    }
+    return file.type === rule;
+  });
+}
+
 function formatBytes(bytes = 0) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -110,17 +128,59 @@ function ImagePreview({ title, src }) {
 }
 
 function FileInput({ accept, multiple = false, onSelect, label = 'Choose File(s)' }) {
+  const inputId = useId();
+  const [dragOver, setDragOver] = useState(false);
+  const [warning, setWarning] = useState('');
+
+  const handlePickedFiles = (rawFiles) => {
+    const allFiles = Array.from(rawFiles || []);
+    const files = allFiles.filter((file) => isAcceptedFile(file, accept));
+    const rejected = allFiles.length - files.length;
+    if (rejected > 0) {
+      setWarning(`${rejected} file(s) ignored due to file type.`);
+    } else {
+      setWarning('');
+    }
+    onSelect(multiple ? files : files[0] || null);
+  };
+
   return (
-    <label className="btn ghost" style={{ display: 'inline-block' }}>
-      {label}
+    <label
+      htmlFor={inputId}
+      className={`drop-input ${dragOver ? 'is-dragover' : ''}`}
+      onDragEnter={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setDragOver(true);
+      }}
+      onDragOver={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setDragOver(true);
+      }}
+      onDragLeave={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setDragOver(false);
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setDragOver(false);
+        handlePickedFiles(event.dataTransfer.files);
+      }}
+    >
+      <div className="drop-input-title">{label}</div>
+      <div className="drop-input-sub">Drag & drop {multiple ? 'files' : 'a file'} here or click to browse</div>
+      {warning ? <div className="drop-input-warn">{warning}</div> : null}
       <input
+        id={inputId}
         type="file"
         accept={accept}
         multiple={multiple}
         style={{ display: 'none' }}
         onChange={(event) => {
-          const files = Array.from(event.target.files || []);
-          onSelect(multiple ? files : files[0] || null);
+          handlePickedFiles(event.target.files || []);
           event.target.value = '';
         }}
       />
@@ -217,6 +277,233 @@ function JpgToPdfTool({ onBack }) {
           <ImagePreview title="Input Preview" src={inputPreview} />
         </div>
       ) : null}
+      <Status message={status} tone={tone} />
+    </ToolFrame>
+  );
+}
+
+function PdfWorkbenchTool({ onBack }) {
+  const [tab, setTab] = useState('combine');
+  const [files, setFiles] = useState([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [dragOver, setDragOver] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState('');
+  const [tone, setTone] = useState('muted');
+  const inputId = useId();
+
+  const tabs = [
+    { id: 'combine', label: 'Combine PDF', accept: 'application/pdf' },
+    { id: 'jpg', label: 'JPG → PDF', accept: 'image/jpeg,image/jpg' },
+    { id: 'png', label: 'PNG → PDF', accept: 'image/png' },
+    { id: 'tiff', label: 'TIFF → PDF', accept: 'image/tiff,.tiff,.tif' },
+    { id: 'svg', label: 'SVG → PDF', accept: 'image/svg+xml,.svg' },
+  ];
+
+  const currentTab = tabs.find((t) => t.id === tab) || tabs[0];
+
+  const setTabAndReset = (nextTab) => {
+    setTab(nextTab);
+    setFiles([]);
+    setActiveIndex(0);
+    setStatus('');
+    setTone('muted');
+  };
+
+  const enrichFiles = async (picked) => {
+    const accepted = picked.filter((file) => isAcceptedFile(file, currentTab.accept));
+    if (!accepted.length) {
+      setTone('error');
+      setStatus('No valid file selected for this tab.');
+      return;
+    }
+
+    const enriched = await Promise.all(accepted.map(async (file, idx) => {
+      let preview = '';
+      let meta = '';
+      if (file.type === 'application/pdf') {
+        try {
+          const info = await getPdfQuickPreview(file, 0.4);
+          preview = info.preview;
+          meta = `${info.pageCount} page(s)`;
+        } catch {
+          preview = '';
+        }
+      } else {
+        try {
+          preview = await readAsDataUrl(file);
+        } catch {
+          preview = '';
+        }
+      }
+      return {
+        id: `${Date.now()}_${idx}_${file.name}`,
+        file,
+        preview,
+        meta,
+      };
+    }));
+
+    setFiles((prev) => [...prev, ...enriched]);
+    setStatus(`${enriched.length} file(s) added.`);
+    setTone('success');
+  };
+
+  const onPickFiles = async (raw) => {
+    const picked = Array.from(raw || []);
+    if (!picked.length) return;
+    await enrichFiles(picked);
+  };
+
+  const onClear = () => {
+    setFiles([]);
+    setActiveIndex(0);
+    setStatus('Selection cleared.');
+    setTone('muted');
+  };
+
+  const runCombine = async () => {
+    if (!files.length) {
+      setTone('error');
+      setStatus('Please upload files first.');
+      return;
+    }
+
+    try {
+      setBusy(true);
+      setTone('muted');
+      setStatus('Processing...');
+
+      if (tab === 'combine') {
+        const finalPdf = await PDFDocument.create();
+        for (const entry of files) {
+          const source = await PDFDocument.load(await readAsArrayBuffer(entry.file), { ignoreEncryption: true });
+          const copied = await finalPdf.copyPages(source, source.getPageIndices());
+          copied.forEach((page) => finalPdf.addPage(page));
+        }
+        const bytes = await finalPdf.save({ useObjectStreams: true, addDefaultPage: false });
+        downloadBlob(new Blob([bytes], { type: 'application/pdf' }), randomFilename('combined_pdf', 'pdf'));
+      } else {
+        const pdfDoc = await PDFDocument.create();
+        for (const entry of files) {
+          const { image } = await embedImageFromFile(pdfDoc, entry.file);
+          const page = pdfDoc.addPage([image.width, image.height]);
+          page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
+        }
+        const bytes = await pdfDoc.save({ useObjectStreams: true, addDefaultPage: false });
+        downloadBlob(new Blob([bytes], { type: 'application/pdf' }), randomFilename(`${tab}_to_pdf`, 'pdf'));
+      }
+
+      setTone('success');
+      setStatus('PDF is ready and downloaded.');
+    } catch {
+      setTone('error');
+      setStatus('Conversion failed. TIFF/SVG support may depend on browser decoding support.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const activeItem = files[activeIndex] || null;
+
+  return (
+    <ToolFrame title="PDF Workbench" onBack={onBack}>
+      <SectionHeader title="Tabbed PDF Studio" subtitle="Upload, preview, clear and combine with a converter-style workflow." />
+
+      <div className="pdf-workbench-tabs">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            className={`pdf-workbench-tab ${tab === t.id ? 'active' : ''}`}
+            onClick={() => setTabAndReset(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="pdf-workbench-shell">
+        <div className="pdf-workbench-toolbar">
+          <label className="btn alt" htmlFor={inputId}>UPLOAD FILES</label>
+          <input
+            id={inputId}
+            type="file"
+            accept={currentTab.accept}
+            multiple
+            style={{ display: 'none' }}
+            onChange={(event) => {
+              onPickFiles(event.target.files || []);
+              event.target.value = '';
+            }}
+          />
+          <button className="btn danger" onClick={onClear}>CLEAR</button>
+        </div>
+
+        <div
+          className={`pdf-workbench-dropzone ${dragOver ? 'is-dragover' : ''}`}
+          onDragEnter={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setDragOver(true);
+          }}
+          onDragOver={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setDragOver(true);
+          }}
+          onDragLeave={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setDragOver(false);
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setDragOver(false);
+            onPickFiles(event.dataTransfer.files);
+          }}
+        >
+          <button
+            className="pdf-workbench-nav"
+            onClick={() => setActiveIndex((prev) => Math.max(0, prev - 1))}
+            disabled={!files.length}
+          >
+            ‹
+          </button>
+
+          <div className="pdf-workbench-preview">
+            {activeItem?.preview ? (
+              <>
+                <img src={activeItem.preview} alt={activeItem.file.name} className="pdf-workbench-preview-image" />
+                <div className="pdf-workbench-preview-caption">
+                  {activeItem.file.name} {activeItem.meta ? `• ${activeItem.meta}` : ''}
+                </div>
+              </>
+            ) : (
+              <div className="pdf-workbench-placeholder">
+                <p>Drop Your Files Here</p>
+                <small>Accepted: {currentTab.accept}</small>
+              </div>
+            )}
+          </div>
+
+          <button
+            className="pdf-workbench-nav"
+            onClick={() => setActiveIndex((prev) => Math.min(files.length - 1, prev + 1))}
+            disabled={!files.length}
+          >
+            ›
+          </button>
+        </div>
+
+        <div className="pdf-workbench-footer">
+          <button className="btn" onClick={runCombine} disabled={busy || !files.length}>
+            {busy ? 'PROCESSING...' : (tab === 'combine' ? 'COMBINE' : 'CONVERT')}
+          </button>
+          {files.length ? <span className="kpi">{files.length} file(s)</span> : null}
+        </div>
+      </div>
+
       <Status message={status} tone={tone} />
     </ToolFrame>
   );
@@ -330,12 +617,27 @@ function CombinePdfsTool({ onBack }) {
     const next = await Promise.all(
       files.map(async (file, index) => {
         const isImage = file.type.startsWith('image/');
+        const isPdf = file.type === 'application/pdf';
+        let preview = '';
+        let pages = 0;
+        if (isImage) {
+          preview = await readAsDataUrl(file);
+        } else if (isPdf) {
+          try {
+            const info = await getPdfQuickPreview(file, 0.35);
+            preview = info.preview;
+            pages = info.pageCount;
+          } catch {
+            preview = '';
+          }
+        }
         return {
           id: `${Date.now()}_${index}_${file.name}`,
           file,
           name: file.name,
           type: file.type,
-          preview: isImage ? await readAsDataUrl(file) : '',
+          preview,
+          pages,
         };
       })
     );
@@ -414,7 +716,9 @@ function CombinePdfsTool({ onBack }) {
             {item.preview ? <img className="thumb" src={item.preview} alt={item.name} /> : <div className="thumb" style={{ display: 'grid', placeItems: 'center' }}>PDF</div>}
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600 }}>{item.name}</div>
-              <small style={{ color: 'var(--muted)' }}>{item.type || 'unknown'}</small>
+              <small style={{ color: 'var(--muted)' }}>
+                {item.type || 'unknown'} {item.pages ? `• ${item.pages} page(s)` : ''}
+              </small>
             </div>
             <button
               className="btn danger"
@@ -1966,6 +2270,8 @@ function renderTool(activeTool, onBack) {
   switch (activeTool) {
     case 'jpg-to-pdf':
       return <JpgToPdfTool onBack={onBack} />;
+    case 'pdf-workbench':
+      return <PdfWorkbenchTool onBack={onBack} />;
     case 'pdf-to-jpg':
       return <PdfToJpgTool onBack={onBack} />;
     case 'combine-pdfs':
