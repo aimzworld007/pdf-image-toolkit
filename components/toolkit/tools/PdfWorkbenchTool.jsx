@@ -9,6 +9,7 @@ import {
   FileInput,
   FileInfoCard,
   ImagePreview,
+  isAcceptedFile,
   PAPER_SIZES,
   PASSPORT_PRESETS,
   applySharpenToCanvas,
