@@ -1,8 +1,6 @@
 import { DemoTicketData } from './ticketTypes';
 import JsBarcode from 'jsbarcode';
 
-const FLIGHT_HOURS_AHEAD = 6;
-const ARRIVAL_HOURS_AFTER_DEPARTURE = 5;
 const TAX_RATE = 0.2483333333;
 
 export const DEFAULT_AGENCY_LOGO = '/default-agency-logo.png';
@@ -140,9 +138,139 @@ function toDateTimeLocalValue(date: Date): string {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+export function formatDateToDateTimeLocalInput(date: Date): string {
+  return toDateTimeLocalValue(date);
+}
+
+function getRandomMinuteBucket(): number {
+  const buckets = [0, 10, 15, 20, 30, 40, 45, 50];
+  return buckets[Math.floor(Math.random() * buckets.length)];
+}
+
+function getAirportCodeFromRoute(route: string): string {
+  const match = route.match(/\[([A-Z]{3})\]/);
+  return match?.[1] || '';
+}
+
+const NONSTOP_DURATION_MINUTES_BY_AIRPORT: Record<string, number> = {
+  DAC: 310,
+  CGP: 320,
+  ZYL: 340,
+  DEL: 205,
+  BOM: 185,
+  CCU: 265,
+  COK: 235,
+  CCJ: 240,
+  HYD: 215,
+  KHI: 130,
+  LHE: 185,
+  ISB: 190,
+  PEW: 200,
+  SKT: 190,
+  ADD: 250,
+  EBB: 330,
+  NBO: 300,
+  DAR: 340,
+};
+
+const DEFAULT_NONSTOP_DURATION_MINUTES = 270;
+const DEFAULT_FARE_RANGE: [number, number] = [500, 2000];
+const DESTINATION_FARE_RANGE_BY_AIRPORT: Record<string, [number, number]> = {
+  DAC: [700, 1500],
+  CGP: [720, 1550],
+  ZYL: [760, 1600],
+  DEL: [500, 1200],
+  BOM: [500, 1250],
+  CCU: [650, 1400],
+  COK: [620, 1350],
+  CCJ: [650, 1400],
+  HYD: [600, 1350],
+  KHI: [500, 1100],
+  LHE: [560, 1300],
+  ISB: [580, 1350],
+  PEW: [620, 1400],
+  SKT: [580, 1300],
+  ADD: [850, 1800],
+  EBB: [950, 2000],
+  NBO: [920, 1950],
+  DAR: [980, 2000],
+};
+
 export function generateDemoReferenceNumber(): string {
   const randomDigits = Math.floor(100000 + Math.random() * 900000);
   return `AG${randomDigits}`;
+}
+
+export function generateRandomDepartureDateTimeForToday(baseDate = new Date()): string {
+  const date = new Date(baseDate);
+  date.setHours(Math.floor(Math.random() * 24), getRandomMinuteBucket(), 0, 0);
+  return toDateTimeLocalValue(date);
+}
+
+export function generateRandomDepartureDateTimeByDate(dateValue: string): string {
+  if (!dateValue) return generateRandomDepartureDateTimeForToday(new Date());
+
+  const date = new Date(`${dateValue}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return generateRandomDepartureDateTimeForToday(new Date());
+
+  date.setHours(Math.floor(Math.random() * 24), getRandomMinuteBucket(), 0, 0);
+  return toDateTimeLocalValue(date);
+}
+
+export function estimateArrivalDateTime(departureDateTime: string, toLocation: string): string {
+  const departure = new Date(departureDateTime);
+  if (Number.isNaN(departure.getTime())) return departureDateTime;
+
+  const airportCode = getAirportCodeFromRoute(toLocation);
+  const durationMinutes = NONSTOP_DURATION_MINUTES_BY_AIRPORT[airportCode] ?? DEFAULT_NONSTOP_DURATION_MINUTES;
+  const arrival = new Date(departure.getTime() + durationMinutes * 60 * 1000);
+  return toDateTimeLocalValue(arrival);
+}
+
+function randomMoneyInRange(min: number, max: number): string {
+  const value = min + Math.random() * (max - min);
+  return value.toFixed(2);
+}
+
+export function getRandomBaseFareByDestination(toLocation: string): string {
+  const airportCode = getAirportCodeFromRoute(toLocation);
+  const [min, max] = DESTINATION_FARE_RANGE_BY_AIRPORT[airportCode] ?? DEFAULT_FARE_RANGE;
+  return randomMoneyInRange(min, max);
+}
+
+function randomItem<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+export function getRandomAirlineByDestination(toLocation: string): string {
+  const destination = toLocation.toLowerCase();
+
+  if (destination.includes('bangladesh')) {
+    return randomItem(['Flydubai', 'Emirates', 'Biman Bangladesh Airlines', 'US-Bangla Airlines', 'Air Arabia']);
+  }
+
+  if (destination.includes('india')) {
+    return randomItem(['Air India', 'IndiGo', 'Emirates', 'Etihad Airways', 'Air Arabia', 'Flydubai']);
+  }
+
+  if (destination.includes('pakistan')) {
+    return randomItem(['Pakistan International Airlines', 'Emirates', 'Etihad Airways', 'Flydubai', 'Air Arabia']);
+  }
+
+  if (
+    destination.includes('ethiopia') ||
+    destination.includes('uganda') ||
+    destination.includes('kenya') ||
+    destination.includes('tanzania')
+  ) {
+    return randomItem(['Ethiopian Airlines', 'Uganda Airlines', 'Emirates', 'Etihad Airways', 'Flydubai']);
+  }
+
+  return randomItem(['Flydubai', 'Emirates', 'Etihad Airways', 'Air Arabia']);
+}
+
+export function getRandomCheckInBaggage(): string {
+  return randomItem(['30 Kg', '35 Kg', '40 Kg', '46 Kg']);
 }
 
 export function generateAlphaNumericCode(length = 6): string {
@@ -216,16 +344,43 @@ export function getCabinBaggageByAirlineAndClass(airlineName: string, travelClas
   return option.economyCabinBaggage;
 }
 
+function extractWeightLabel(value: string): string {
+  const normalized = value.trim();
+  if (!normalized) return '-';
+  return normalized;
+}
+
+export function generateAutoBaggageContent(airlineName: string, checkInBaggage: string, cabinBaggage: string): {
+  title: string;
+  notes: string;
+} {
+  const airline = airlineName.trim() || 'Selected airline';
+  const checkIn = extractWeightLabel(checkInBaggage);
+  const cabin = extractWeightLabel(cabinBaggage);
+
+  const title = `Baggage Allowance (${airline}): Check-in ${checkIn} | Cabin ${cabin}`;
+  const notes = [
+    `Cabin: Adult ${cabin}. Excess hand baggage may be charged at the airport.`,
+    `Check-in: Adult ${checkIn}. Oversize/overweight bags may incur additional fees.`,
+    'Restricted and prohibited items follow airline and airport safety policy.',
+    'Final allowance can vary by route/fare/frequent-flyer tier; verify at check-in.',
+  ].join('\n');
+
+  return { title, notes };
+}
+
 export function getDefaultTicketData(): DemoTicketData {
   const now = new Date();
-  const departure = new Date(now.getTime() + FLIGHT_HOURS_AHEAD * 60 * 60 * 1000);
-  const arrival = new Date(departure.getTime() + ARRIVAL_HOURS_AFTER_DEPARTURE * 60 * 60 * 1000);
+  const departureDateTime = generateRandomDepartureDateTimeForToday(now);
+  const arrivalDateTime = estimateArrivalDateTime(departureDateTime, 'Dhaka [DAC]');
 
-  const defaultBaseFare = '600.00';
+  const defaultBaseFare = getRandomBaseFareByDestination('Dhaka [DAC]');
   const defaultTax = calculateTaxFromBaseFare(defaultBaseFare);
   const defaultTotal = calculateTotalFareFromBaseFare(defaultBaseFare);
 
   const defaultAgency = AGENCY_PRESETS[0];
+
+  const autoBaggage = generateAutoBaggageContent('Flydubai', '40 Kg', '7 Kg');
 
   return {
     agencyName: defaultAgency.name,
@@ -233,23 +388,22 @@ export function getDefaultTicketData(): DemoTicketData {
     agencyTel: defaultAgency.tel,
     agencyEmail: defaultAgency.email,
     agencyLogoUrl: DEFAULT_AGENCY_LOGO,
-    passengerName: 'MD SUMON SHEIK',
+    passengerName: 'Ainul islam',
     bookingDate: toDateTimeLocalValue(now),
     fromLocation: 'Dubai [DXB]',
     fromTerminal: 'Terminal 2',
     toLocation: 'Dhaka [DAC]',
     toTerminal: 'Terminal 1',
-    departureDateTime: toDateTimeLocalValue(departure),
-    arrivalDateTime: toDateTimeLocalValue(arrival),
+    departureDateTime,
+    arrivalDateTime,
     airline: 'Flydubai',
     flightNumber: 'FZ 501',
     travelClass: 'Economy',
     stops: 'Non Stop',
     checkInBaggage: '40 Kg',
     cabinBaggage: '7 Kg',
-    baggage: 'Baggage Allowance: Adult - 40 Kg',
-    baggageNotes:
-      'Bag 1 Chg May Apply If Bags Exceed TI Wt Allowance\nBag 2 Chgs May Apply If Bags Exceed TI Wt Allowance\nRefer to airline baggage policy for further details.',
+    baggage: autoBaggage.title,
+    baggageNotes: autoBaggage.notes,
     baseFare: defaultBaseFare,
     tax: defaultTax,
     totalFare: defaultTotal,

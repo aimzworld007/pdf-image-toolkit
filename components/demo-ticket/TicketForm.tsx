@@ -4,10 +4,12 @@ import {
   Autocomplete,
   Box,
   Button,
+  FormControlLabel,
   Grid,
   MenuItem,
   Paper,
   Stack,
+  Switch,
   TextField,
   Typography,
 } from '@mui/material';
@@ -30,6 +32,9 @@ interface TicketFormProps {
   onPresetAgencySelect: (agencyName: string) => void;
   onApplyDefaultAgency: () => void;
   onGenerateRandomAgency: () => void;
+  isBaggageManualEdit: boolean;
+  onToggleBaggageManualEdit: (enabled: boolean) => void;
+  isReadOnly: boolean;
 }
 
 const STATUS_OPTIONS: TicketStatus[] = ['CONFIRMED', 'PENDING', 'ON HOLD', 'CANCELLED'];
@@ -45,6 +50,9 @@ export default function TicketForm({
   onPresetAgencySelect,
   onApplyDefaultAgency,
   onGenerateRandomAgency,
+  isBaggageManualEdit,
+  onToggleBaggageManualEdit,
+  isReadOnly,
 }: TicketFormProps) {
   return (
     <Paper elevation={0} sx={{ p: 2.2, borderRadius: 2, border: '1px solid #dbe3f2', bgcolor: '#ffffff' }}>
@@ -52,6 +60,13 @@ export default function TicketForm({
         <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a' }}>
           Ticket Input Form
         </Typography>
+        {isReadOnly ? (
+          <Typography sx={{ fontSize: 12, color: '#b45309' }}>
+            Magic mode is locked. Click "Default (Editable Mode)" to modify fields.
+          </Typography>
+        ) : null}
+
+        <Box sx={{ opacity: isReadOnly ? 0.72 : 1, pointerEvents: isReadOnly ? 'none' : 'auto' }}>
 
         <Box>
           <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: '#334155' }}>
@@ -240,7 +255,7 @@ export default function TicketForm({
                 value={data.toLocation}
                 onChange={(_, value) => onFieldChange('toLocation', value || '')}
                 onInputChange={(_, value, reason) => {
-                  if (reason === 'input' || reason === 'clear') onFieldChange('toLocation', value);
+                  if (reason === 'clear') onFieldChange('toLocation', value);
                 }}
                 renderInput={(params) => <TextField {...params} size="small" label="To Destination" />}
               />
@@ -269,12 +284,16 @@ export default function TicketForm({
               <TextField
                 fullWidth
                 size="small"
-                label="Arrival Date & Time"
+                label="Arrival Date & Time (Auto)"
                 type="datetime-local"
                 value={data.arrivalDateTime}
-                onChange={(event) => onFieldChange('arrivalDateTime', event.target.value)}
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ input: { readOnly: true }, inputLabel: { shrink: true } }}
               />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Typography sx={{ fontSize: 11, color: '#64748b' }}>
+                Arrival time is auto-generated based on destination and departure time for typical non-stop duration.
+              </Typography>
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
@@ -282,7 +301,7 @@ export default function TicketForm({
                 size="small"
                 label="Flight Number (Auto)"
                 value={data.flightNumber}
-                slotProps={{ input: { readOnly: true } }}
+                slotProps={{ input: { readOnly: true }, inputLabel: { shrink: true } }}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
@@ -317,6 +336,16 @@ export default function TicketForm({
           <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: '#334155' }}>
             Baggage and Fare
           </Typography>
+          <FormControlLabel
+            sx={{ mb: 1 }}
+            control={
+              <Switch
+                checked={isBaggageManualEdit}
+                onChange={(event) => onToggleBaggageManualEdit(event.target.checked)}
+              />
+            }
+            label="Enable Manual Baggage Edit"
+          />
           <Grid container spacing={1.4}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
@@ -347,8 +376,9 @@ export default function TicketForm({
               <TextField
                 fullWidth
                 size="small"
-                label="Baggage Title (Manual)"
+                label={isBaggageManualEdit ? 'Baggage Title (Manual)' : 'Baggage Title (Auto)'}
                 value={data.baggage}
+                slotProps={{ input: { readOnly: !isBaggageManualEdit } }}
                 onChange={(event) => onFieldChange('baggage', event.target.value)}
               />
             </Grid>
@@ -358,8 +388,9 @@ export default function TicketForm({
                 size="small"
                 multiline
                 minRows={3}
-                label="Baggage Notes (Manual)"
+                label={isBaggageManualEdit ? 'Baggage Notes (Manual)' : 'Baggage Notes (Auto)'}
                 value={data.baggageNotes}
+                slotProps={{ input: { readOnly: !isBaggageManualEdit } }}
                 onChange={(event) => onFieldChange('baggageNotes', event.target.value)}
               />
             </Grid>
@@ -385,6 +416,7 @@ export default function TicketForm({
               />
             </Grid>
           </Grid>
+        </Box>
         </Box>
       </Stack>
     </Paper>

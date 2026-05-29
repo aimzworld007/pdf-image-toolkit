@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
   Alert,
   Box,
@@ -8,8 +9,10 @@ import {
   Container,
   GlobalStyles,
   Grid,
+  MenuItem,
   Paper,
   Stack,
+  TextField,
   Typography,
 } from '@mui/material';
 import TicketForm from './TicketForm';
@@ -19,18 +22,75 @@ import {
   AGENCY_PRESETS,
   DEFAULT_AGENCY_LOGO,
   GENERATED_AGENCY_LOGO,
+  DESTINATION_OPTIONS,
   applyAgencyProfileToTicket,
   calculateTaxFromBaseFare,
   calculateTotalFareFromBaseFare,
+  formatDateToDateTimeLocalInput,
+  generateAutoBaggageContent,
   getCabinBaggageByAirlineAndClass,
+  getRandomAirlineByDestination,
   getRandomAgencyProfile,
+  getRandomCheckInBaggage,
+  generateRandomDepartureDateTimeByDate,
   generateAlphaNumericCode,
   generateBarcodeDataUrl,
   generateDemoReferenceNumber,
+  estimateArrivalDateTime,
+  getRandomBaseFareByDestination,
   generateFlightNumberFromAirline,
   generateDummyTicketNumber,
   getDefaultTicketData,
 } from './demoTicketUtils';
+
+const TOOL_MENU_LINKS = [
+  { href: '/image-tools', label: 'Image Tools' },
+  { href: '/pdf-tools', label: 'PDF Tools' },
+  { href: '/lamination-tools', label: 'Lamination Tools' },
+  { href: '/photo-print-tools', label: 'Photo Print Tools' },
+  { href: '/demo-ticket-generator', label: 'Demo Ticket Generator' },
+];
+
+const EXTERNAL_TOOLS = [
+  {
+    icon: '💰',
+    title: 'REMIT BD',
+    url: 'https://remitbd.vercel.app/',
+    desc: 'Fast remittance workflow and transaction support tools.',
+  },
+  {
+    icon: '🍽️',
+    title: 'Mess Meal Manager system',
+    url: 'https://smm24.vercel.app/',
+    desc: 'Meal planning, cost tracking, and member-wise management.',
+  },
+  {
+    icon: '⚙️',
+    title: 'WORK TRACKING MANAGMENT SYSTEM',
+    url: 'https://worktms.vercel.app',
+    desc: 'Task assignment, activity logs, and progress monitoring.',
+  },
+  {
+    title: 'UAE VAT & TAX SUITE SYSTEM',
+    icon: '🔗',
+    url: 'https://www.uaevat.live',
+    desc: 'VAT calculators, tax helpers, and compliance utilities.',
+  },
+  {
+    icon: '🔗',
+    title: 'PERSONAL FINANCE MANAGER',
+    url: 'https://finpulse24.vercel.app/',
+    desc: 'Budgeting, expense insights, and savings overview.',
+  },
+  {
+    icon: '🔗',
+    title: 'TYPING & TRVALE MANAGMENT ERP SYSTEM',
+    url: 'https://ecashbiz.com/landing',
+    desc: 'ERP toolkit for typing centers and travel operations.',
+  },
+];
+
+const MARQUEE_TOOLS = [...EXTERNAL_TOOLS, ...EXTERNAL_TOOLS];
 
 export default function TicketPage() {
   const [formData, setFormData] = useState<DemoTicketData>(getDefaultTicketData);
@@ -40,6 +100,11 @@ export default function TicketPage() {
   const [crsRef, setCrsRef] = useState<string>(() => generateAlphaNumericCode(5));
   const [isDownloading, setIsDownloading] = useState(false);
   const [pdfError, setPdfError] = useState<string>('');
+  const [isBaggageManualEdit, setIsBaggageManualEdit] = useState(false);
+  const [formMode, setFormMode] = useState<'default-editable' | 'magic-locked'>('default-editable');
+  const [magicPassengerName, setMagicPassengerName] = useState('Ainul islam');
+  const [magicDestination, setMagicDestination] = useState('Dhaka [DAC] - Bangladesh');
+  const [magicDate, setMagicDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   const previewRef = useRef<HTMLDivElement>(null);
   const barcodeDataUrl = useMemo(() => generateBarcodeDataUrl(ticketNumber), [ticketNumber]);
@@ -53,6 +118,20 @@ export default function TicketPage() {
         next.tax = calculateTaxFromBaseFare(next.baseFare);
         next.totalFare = calculateTotalFareFromBaseFare(next.baseFare);
       }
+      if (field === 'departureDateTime' || field === 'toLocation') {
+        next.arrivalDateTime = estimateArrivalDateTime(next.departureDateTime, next.toLocation);
+      }
+      if (field === 'toLocation') {
+        const nextBaseFare = getRandomBaseFareByDestination(next.toLocation);
+        next.baseFare = nextBaseFare;
+        next.tax = calculateTaxFromBaseFare(nextBaseFare);
+        next.totalFare = calculateTotalFareFromBaseFare(nextBaseFare);
+      }
+      if (!isBaggageManualEdit && (field === 'checkInBaggage' || field === 'airline' || field === 'cabinBaggage')) {
+        const auto = generateAutoBaggageContent(next.airline, next.checkInBaggage, next.cabinBaggage);
+        next.baggage = auto.title;
+        next.baggageNotes = auto.notes;
+      }
       return next;
     });
   };
@@ -61,21 +140,41 @@ export default function TicketPage() {
     setFormData((current) => {
       const nextAirline = airlineName || '';
       const nextClass = current.travelClass || 'Economy';
+      const nextCabin = getCabinBaggageByAirlineAndClass(nextAirline, nextClass);
+      const auto = generateAutoBaggageContent(nextAirline, current.checkInBaggage, nextCabin);
       return {
         ...current,
         airline: nextAirline,
         flightNumber: generateFlightNumberFromAirline(nextAirline),
-        cabinBaggage: getCabinBaggageByAirlineAndClass(nextAirline, nextClass),
+        cabinBaggage: nextCabin,
+        baggage: isBaggageManualEdit ? current.baggage : auto.title,
+        baggageNotes: isBaggageManualEdit ? current.baggageNotes : auto.notes,
       };
     });
   };
 
   const handleTravelClassChange = (travelClass: string) => {
-    setFormData((current) => ({
-      ...current,
-      travelClass,
-      cabinBaggage: getCabinBaggageByAirlineAndClass(current.airline, travelClass),
-    }));
+    setFormData((current) => {
+      const nextCabin = getCabinBaggageByAirlineAndClass(current.airline, travelClass);
+      const auto = generateAutoBaggageContent(current.airline, current.checkInBaggage, nextCabin);
+      return {
+        ...current,
+        travelClass,
+        cabinBaggage: nextCabin,
+        baggage: isBaggageManualEdit ? current.baggage : auto.title,
+        baggageNotes: isBaggageManualEdit ? current.baggageNotes : auto.notes,
+      };
+    });
+  };
+
+  const handleToggleBaggageManualEdit = (enabled: boolean) => {
+    setIsBaggageManualEdit(enabled);
+    if (enabled) return;
+
+    setFormData((current) => {
+      const auto = generateAutoBaggageContent(current.airline, current.checkInBaggage, current.cabinBaggage);
+      return { ...current, baggage: auto.title, baggageNotes: auto.notes };
+    });
   };
 
   const handlePresetAgencySelect = (agencyName: string) => {
@@ -121,8 +220,60 @@ export default function TicketPage() {
     setCrsRef(generateAlphaNumericCode(5));
   };
 
+  const handleGenerateMagicTicket = () => {
+    const passengerName = magicPassengerName.trim() || 'Ainul islam';
+    const toLocation = magicDestination || 'Dhaka [DAC] - Bangladesh';
+    const departureDateTime = generateRandomDepartureDateTimeByDate(magicDate);
+    const arrivalDateTime = estimateArrivalDateTime(departureDateTime, toLocation);
+    const airline = getRandomAirlineByDestination(toLocation);
+    const travelClass = 'Economy';
+    const flightNumber = generateFlightNumberFromAirline(airline);
+    const checkInBaggage = getRandomCheckInBaggage();
+    const cabinBaggage = getCabinBaggageByAirlineAndClass(airline, travelClass);
+    const baggageAuto = generateAutoBaggageContent(airline, checkInBaggage, cabinBaggage);
+    const baseFare = getRandomBaseFareByDestination(toLocation);
+    const tax = calculateTaxFromBaseFare(baseFare);
+    const totalFare = calculateTotalFareFromBaseFare(baseFare);
+    const randomAgency = getRandomAgencyProfile();
+    const bookingDate = formatDateToDateTimeLocalInput(new Date());
+
+    setFormData((current) => ({
+      ...current,
+      agencyName: randomAgency.name,
+      agencyAddress: randomAgency.address,
+      agencyEmail: randomAgency.email,
+      agencyTel: randomAgency.tel,
+      agencyLogoUrl: GENERATED_AGENCY_LOGO,
+      passengerName,
+      bookingDate,
+      fromLocation: 'Dubai [DXB]',
+      fromTerminal: 'Terminal 2',
+      toLocation,
+      toTerminal: 'Terminal 1',
+      departureDateTime,
+      arrivalDateTime,
+      airline,
+      flightNumber,
+      travelClass,
+      stops: 'Non Stop',
+      checkInBaggage,
+      cabinBaggage,
+      baggage: baggageAuto.title,
+      baggageNotes: baggageAuto.notes,
+      baseFare,
+      tax,
+      totalFare,
+      status: 'CONFIRMED',
+    }));
+
+    handleRegenerateIds();
+    setIsBaggageManualEdit(false);
+    setFormMode('magic-locked');
+  };
+
   const handleReset = () => {
     setFormData(getDefaultTicketData());
+    setIsBaggageManualEdit(false);
     handleRegenerateIds();
   };
 
@@ -211,6 +362,77 @@ export default function TicketPage() {
         <Typography sx={{ mt: 0.8, opacity: 0.9 }}>
           Standalone React + TypeScript + Material UI page with live preview and print/PDF output.
         </Typography>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 1.3, flexWrap: 'wrap' }} useFlexGap>
+          <Link href="/" className="btn ghost" style={{ textDecoration: 'none' }}>
+            Back To Home
+          </Link>
+          {TOOL_MENU_LINKS.map((item) => (
+            <Link key={item.href} href={item.href} className="btn ghost" style={{ textDecoration: 'none' }}>
+              {item.label}
+            </Link>
+          ))}
+        </Stack>
+      </Paper>
+
+      <Paper
+        className="no-print"
+        elevation={0}
+        sx={{ mb: 2, p: 1.6, borderRadius: 2, border: '1px solid #dbe3f2', bgcolor: '#ffffff' }}
+      >
+        <Stack spacing={1.2}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            Magic Ticket Generator
+          </Typography>
+          <Typography sx={{ fontSize: 13, color: '#64748b' }}>
+            Enter only passenger name, destination, and date. Generate and lock a pro random ticket instantly.
+          </Typography>
+          <Grid container spacing={1.2}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Passenger Name"
+                value={magicPassengerName}
+                onChange={(event) => setMagicPassengerName(event.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Destination"
+                select
+                value={magicDestination}
+                onChange={(event) => setMagicDestination(event.target.value)}
+              >
+                {DESTINATION_OPTIONS.map((item) => (
+                  <MenuItem key={item} value={item}>
+                    {item}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Travel Date"
+                type="date"
+                value={magicDate}
+                onChange={(event) => setMagicDate(event.target.value)}
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+            </Grid>
+          </Grid>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+            <Button variant="contained" onClick={handleGenerateMagicTicket}>
+              Generate Random (Lock Edit)
+            </Button>
+            <Button variant="outlined" onClick={() => setFormMode('default-editable')}>
+              Default (Editable Mode)
+            </Button>
+          </Stack>
+        </Stack>
       </Paper>
 
       <Grid container spacing={2}>
@@ -225,6 +447,9 @@ export default function TicketPage() {
               onPresetAgencySelect={handlePresetAgencySelect}
               onApplyDefaultAgency={handleApplyDefaultAgency}
               onGenerateRandomAgency={handleGenerateRandomAgency}
+              isBaggageManualEdit={isBaggageManualEdit}
+              onToggleBaggageManualEdit={handleToggleBaggageManualEdit}
+              isReadOnly={formMode === 'magic-locked'}
             />
 
             <Paper elevation={0} sx={{ p: 1.6, borderRadius: 2, border: '1px solid #dbe3f2', bgcolor: '#ffffff' }}>
@@ -266,6 +491,41 @@ export default function TicketPage() {
           />
         </Grid>
       </Grid>
+
+      <section className="home-section no-print" style={{ marginTop: 22 }}>
+        <h2 className="section-title">Other Tools</h2>
+        <div className="home-marquee-wrap">
+          <div className="home-marquee-track">
+            {MARQUEE_TOOLS.map((tool, index) => (
+              <article
+                key={`${tool.url}-${index}`}
+                className="home-marquee-card"
+                aria-hidden={index >= EXTERNAL_TOOLS.length}
+              >
+                <a href={tool.url} target="_blank" rel="noopener noreferrer" className="home-external-link-title">
+                  <span className="home-tool-icon">{tool.icon}</span>
+                  <span>{tool.title}</span>
+                  <span className="home-open-pill">Open</span>
+                </a>
+                <p>{tool.desc}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <footer className="home-footer no-print">
+        <p>
+          Developed By{' '}
+          <a href="https://ainulislam.info" target="_blank" rel="noopener noreferrer">
+            Ainul islam
+          </a>{' '}
+          Powered By{' '}
+          <a href="https://aimzit.xyz" target="_blank" rel="noopener noreferrer">
+            Aimz it
+          </a>
+        </p>
+      </footer>
     </Container>
   );
 }
