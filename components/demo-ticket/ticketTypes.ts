@@ -24,7 +24,6 @@ export interface DemoTicketData {
   baggageNotes: string;
   baseFare: string;
   tax: string;
-  ssrAmount: string;
   totalFare: string;
   status: TicketStatus;
 }

@@ -16,7 +16,8 @@ import TicketForm from './TicketForm';
 import TicketPreview from './TicketPreview';
 import { DemoTicketData } from './ticketTypes';
 import {
-  calculateTotalFareWithSsr,
+  calculateTaxFromBaseFare,
+  calculateTotalFareFromBaseFare,
   generateAlphaNumericCode,
   generateBarcodeDataUrl,
   generateDemoReferenceNumber,
@@ -36,16 +37,14 @@ export default function TicketPage() {
   const previewRef = useRef<HTMLDivElement>(null);
   const barcodeDataUrl = useMemo(() => generateBarcodeDataUrl(ticketNumber), [ticketNumber]);
 
-  const canAutoCalculate = useMemo(
-    () => Boolean(formData.baseFare.trim() || formData.tax.trim() || formData.ssrAmount.trim()),
-    [formData.baseFare, formData.tax, formData.ssrAmount]
-  );
+  const canAutoCalculate = useMemo(() => Boolean(formData.baseFare.trim()), [formData.baseFare]);
 
   const handleFieldChange = (field: keyof DemoTicketData, value: string) => {
     setFormData((current) => {
       const next = { ...current, [field]: value };
-      if (field === 'baseFare' || field === 'tax' || field === 'ssrAmount') {
-        next.totalFare = calculateTotalFareWithSsr(next.baseFare, next.tax, next.ssrAmount);
+      if (field === 'baseFare') {
+        next.tax = calculateTaxFromBaseFare(next.baseFare);
+        next.totalFare = calculateTotalFareFromBaseFare(next.baseFare);
       }
       return next;
     });
@@ -54,8 +53,21 @@ export default function TicketPage() {
   const handleAutoCalculateTotal = () => {
     setFormData((current) => ({
       ...current,
-      totalFare: calculateTotalFareWithSsr(current.baseFare, current.tax, current.ssrAmount),
+      tax: calculateTaxFromBaseFare(current.baseFare),
+      totalFare: calculateTotalFareFromBaseFare(current.baseFare),
     }));
+  };
+
+  const handleLogoUpload = (file: File | null) => {
+    if (!file || !file.type.startsWith('image/')) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      if (!result) return;
+      setFormData((current) => ({ ...current, agencyLogoUrl: result }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleRegenerateIds = () => {
@@ -128,6 +140,11 @@ export default function TicketPage() {
               boxShadow: 'none !important',
               border: '1px solid #94a3b8 !important',
             },
+            '.ticket-status-text': {
+              color: '#0f8a2f !important',
+              WebkitPrintColorAdjust: 'exact',
+              printColorAdjust: 'exact',
+            },
           },
         }}
       />
@@ -155,7 +172,7 @@ export default function TicketPage() {
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 5 }} className="no-print">
           <Stack spacing={1.4}>
-            <TicketForm data={formData} onFieldChange={handleFieldChange} />
+            <TicketForm data={formData} onFieldChange={handleFieldChange} onLogoUpload={handleLogoUpload} />
 
             <Paper elevation={0} sx={{ p: 1.6, borderRadius: 2, border: '1px solid #dbe3f2', bgcolor: '#ffffff' }}>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
@@ -169,7 +186,7 @@ export default function TicketPage() {
                   Regenerate Numbers
                 </Button>
                 <Button variant="outlined" onClick={handleAutoCalculateTotal} disabled={!canAutoCalculate}>
-                  Auto Total
+                  Recalculate Fare
                 </Button>
                 <Button variant="text" color="inherit" onClick={handleReset}>
                   Reset

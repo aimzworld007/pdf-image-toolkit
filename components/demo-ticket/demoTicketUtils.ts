@@ -3,6 +3,7 @@ import JsBarcode from 'jsbarcode';
 
 const FLIGHT_HOURS_AHEAD = 6;
 const ARRIVAL_HOURS_AFTER_DEPARTURE = 5;
+const TAX_RATE = 0.2483333333;
 
 function pad(value: number): string {
   return String(value).padStart(2, '0');
@@ -45,6 +46,10 @@ export function getDefaultTicketData(): DemoTicketData {
   const departure = new Date(now.getTime() + FLIGHT_HOURS_AHEAD * 60 * 60 * 1000);
   const arrival = new Date(departure.getTime() + ARRIVAL_HOURS_AFTER_DEPARTURE * 60 * 60 * 1000);
 
+  const defaultBaseFare = '600.00';
+  const defaultTax = calculateTaxFromBaseFare(defaultBaseFare);
+  const defaultTotal = calculateTotalFareFromBaseFare(defaultBaseFare);
+
   return {
     agencyName: 'HABAT AL LULU TYPING & DOCUMENTS COPYING',
     agencyAddress: 'POLIMAR BUILDING SHOP S06A, INDUSTRIAL AREA 1, SHARJAH, UAE',
@@ -68,10 +73,9 @@ export function getDefaultTicketData(): DemoTicketData {
     baggage: 'Baggage Allowance: Adult - 40 Kg',
     baggageNotes:
       'Bag 1 Chg May Apply If Bags Exceed TI Wt Allowance\nBag 2 Chgs May Apply If Bags Exceed TI Wt Allowance\nRefer to airline baggage policy for further details.',
-    baseFare: '600.00',
-    tax: '149.00',
-    ssrAmount: '0.00',
-    totalFare: '749.00',
+    baseFare: defaultBaseFare,
+    tax: defaultTax,
+    totalFare: defaultTotal,
     status: 'CONFIRMED',
   };
 }
@@ -100,8 +104,13 @@ export function calculateTotalFare(baseFare: string, tax: string): string {
   return (parseAmount(baseFare) + parseAmount(tax)).toFixed(2);
 }
 
-export function calculateTotalFareWithSsr(baseFare: string, tax: string, ssrAmount: string): string {
-  return (parseAmount(baseFare) + parseAmount(tax) + parseAmount(ssrAmount)).toFixed(2);
+export function calculateTaxFromBaseFare(baseFare: string): string {
+  return (parseAmount(baseFare) * TAX_RATE).toFixed(2);
+}
+
+export function calculateTotalFareFromBaseFare(baseFare: string): string {
+  const tax = parseAmount(calculateTaxFromBaseFare(baseFare));
+  return (parseAmount(baseFare) + tax).toFixed(2);
 }
 
 export function calculateDuration(departureDateTime: string, arrivalDateTime: string): string {

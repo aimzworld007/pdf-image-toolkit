@@ -1,16 +1,17 @@
 'use client';
 
-import { Box, Grid, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, Grid, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material';
 import { DemoTicketData, TicketStatus } from './ticketTypes';
 
 interface TicketFormProps {
   data: DemoTicketData;
   onFieldChange: (field: keyof DemoTicketData, value: string) => void;
+  onLogoUpload: (file: File | null) => void;
 }
 
 const STATUS_OPTIONS: TicketStatus[] = ['CONFIRMED', 'PENDING', 'ON HOLD', 'CANCELLED'];
 
-export default function TicketForm({ data, onFieldChange }: TicketFormProps) {
+export default function TicketForm({ data, onFieldChange, onLogoUpload }: TicketFormProps) {
   return (
     <Paper elevation={0} sx={{ p: 2.2, borderRadius: 2, border: '1px solid #dbe3f2', bgcolor: '#ffffff' }}>
       <Stack spacing={2}>
@@ -63,10 +64,25 @@ export default function TicketForm({ data, onFieldChange }: TicketFormProps) {
               <TextField
                 fullWidth
                 size="small"
-                label="Logo URL (default included)"
+                label="Logo URL (Optional)"
                 value={data.agencyLogoUrl}
                 onChange={(event) => onFieldChange('agencyLogoUrl', event.target.value)}
               />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Button variant="outlined" component="label" size="small">
+                Upload Custom Logo
+                <input
+                  hidden
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    onLogoUpload(file);
+                    event.currentTarget.value = '';
+                  }}
+                />
+              </Button>
             </Grid>
           </Grid>
         </Box>
@@ -260,7 +276,7 @@ export default function TicketForm({ data, onFieldChange }: TicketFormProps) {
                 onChange={(event) => onFieldChange('baggageNotes', event.target.value)}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 3 }}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -269,31 +285,22 @@ export default function TicketForm({ data, onFieldChange }: TicketFormProps) {
                 onChange={(event) => onFieldChange('baseFare', event.target.value)}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 3 }}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 size="small"
                 label="Tax"
                 value={data.tax}
-                onChange={(event) => onFieldChange('tax', event.target.value)}
+                slotProps={{ input: { readOnly: true } }}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 3 }}>
-              <TextField
-                fullWidth
-                size="small"
-                label="SSR Amount"
-                value={data.ssrAmount}
-                onChange={(event) => onFieldChange('ssrAmount', event.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 3 }}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 size="small"
                 label="Total Fare"
                 value={data.totalFare}
-                onChange={(event) => onFieldChange('totalFare', event.target.value)}
+                slotProps={{ input: { readOnly: true } }}
               />
             </Grid>
           </Grid>

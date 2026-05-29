@@ -1,9 +1,9 @@
 'use client';
 
-import { Box, Chip, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import { Box, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import { RefObject } from 'react';
 import { DemoTicketData } from './ticketTypes';
-import { calculateDuration, formatDateOnly, formatDateTime, formatMoney, formatTimeOnly } from './demoTicketUtils';
+import { calculateDuration, formatDateOnly, formatMoney, formatTimeOnly } from './demoTicketUtils';
 
 interface TicketPreviewProps {
   data: DemoTicketData;
@@ -89,12 +89,19 @@ export default function TicketPreview({
               </TableCell>
               <TableCell sx={{ width: '24%', borderRight: '1px solid #dbe3f2' }}>
                 <Typography sx={{ fontSize: 10, color: '#475569' }}>Status:</Typography>
-                <Chip
-                  label={data.status || 'PENDING'}
-                  size="small"
-                  color={getStatusColor(data.status)}
-                  sx={{ fontWeight: 800, mt: 0.4 }}
-                />
+                <Typography
+                  className="ticket-status-text"
+                  sx={{
+                    mt: 0.4,
+                    fontWeight: 800,
+                    fontSize: 13,
+                    color: getStatusColor(data.status) === 'success' ? '#0f8a2f' : getStatusColor(data.status) === 'warning' ? '#a15c00' : '#b91c1c',
+                    WebkitPrintColorAdjust: 'exact',
+                    printColorAdjust: 'exact',
+                  }}
+                >
+                  {data.status || 'PENDING'}
+                </Typography>
               </TableCell>
               <TableCell sx={{ width: '20%', textAlign: 'right' }}>
                 <Box
@@ -213,7 +220,6 @@ export default function TicketPreview({
               <TableRow sx={{ bgcolor: '#f8fafc' }}>
                 <TableCell sx={{ fontWeight: 700 }}>Base Fare</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Taxes and Charges</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>SSR Amount</TableCell>
                 <TableCell sx={{ fontWeight: 700, textAlign: 'right' }}>Total</TableCell>
               </TableRow>
             </TableHead>
@@ -221,7 +227,6 @@ export default function TicketPreview({
               <TableRow>
                 <TableCell>{formatMoney(data.baseFare)}</TableCell>
                 <TableCell>{formatMoney(data.tax)}</TableCell>
-                <TableCell>{formatMoney(data.ssrAmount)}</TableCell>
                 <TableCell sx={{ textAlign: 'right' }}>{formatMoney(data.totalFare)}</TableCell>
               </TableRow>
             </TableBody>
@@ -250,7 +255,7 @@ export default function TicketPreview({
 
         <Box sx={{ px: 1, pb: 1 }}>
           <Typography sx={{ fontSize: 10, color: '#64748b' }}>
-            Generated on: {formatDateTime(new Date().toISOString())}
+            Generated on: {formatDateOnly(data.bookingDate)}
           </Typography>
         </Box>
       </Box>
