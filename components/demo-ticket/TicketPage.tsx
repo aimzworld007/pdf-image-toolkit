@@ -102,6 +102,7 @@ export default function TicketPage() {
   const [pdfError, setPdfError] = useState<string>('');
   const [isBaggageManualEdit, setIsBaggageManualEdit] = useState(false);
   const [formMode, setFormMode] = useState<'default-editable' | 'magic-locked'>('default-editable');
+  const [agencyMode, setAgencyMode] = useState<'default' | 'random'>('default');
   const [magicPassengerName, setMagicPassengerName] = useState('Ainul islam');
   const [magicDestination, setMagicDestination] = useState('Dhaka [DAC] - Bangladesh');
   const [magicDate, setMagicDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -185,11 +186,13 @@ export default function TicketPage() {
 
   const handleApplyDefaultAgency = () => {
     const defaultAgency = AGENCY_PRESETS[0];
+    setAgencyMode('default');
     setFormData((current) => applyAgencyProfileToTicket(current, defaultAgency, DEFAULT_AGENCY_LOGO));
   };
 
   const handleGenerateRandomAgency = () => {
     const randomAgency = getRandomAgencyProfile();
+    setAgencyMode('random');
     setFormData((current) => applyAgencyProfileToTicket(current, randomAgency, GENERATED_AGENCY_LOGO));
   };
 
@@ -268,12 +271,14 @@ export default function TicketPage() {
 
     handleRegenerateIds();
     setIsBaggageManualEdit(false);
+    setAgencyMode('random');
     setFormMode('magic-locked');
   };
 
   const handleReset = () => {
     setFormData(getDefaultTicketData());
     setIsBaggageManualEdit(false);
+    setAgencyMode('default');
     handleRegenerateIds();
   };
 
@@ -447,6 +452,8 @@ export default function TicketPage() {
               onPresetAgencySelect={handlePresetAgencySelect}
               onApplyDefaultAgency={handleApplyDefaultAgency}
               onGenerateRandomAgency={handleGenerateRandomAgency}
+              agencyMode={agencyMode}
+              onAgencyModeChange={setAgencyMode}
               isBaggageManualEdit={isBaggageManualEdit}
               onToggleBaggageManualEdit={handleToggleBaggageManualEdit}
               isReadOnly={formMode === 'magic-locked'}

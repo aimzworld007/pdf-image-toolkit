@@ -3,7 +3,6 @@
 import {
   Autocomplete,
   Box,
-  Button,
   FormControlLabel,
   Grid,
   MenuItem,
@@ -11,6 +10,8 @@ import {
   Stack,
   Switch,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
 import { DemoTicketData, TicketStatus } from './ticketTypes';
@@ -32,6 +33,8 @@ interface TicketFormProps {
   onPresetAgencySelect: (agencyName: string) => void;
   onApplyDefaultAgency: () => void;
   onGenerateRandomAgency: () => void;
+  agencyMode: 'default' | 'random';
+  onAgencyModeChange: (mode: 'default' | 'random') => void;
   isBaggageManualEdit: boolean;
   onToggleBaggageManualEdit: (enabled: boolean) => void;
   isReadOnly: boolean;
@@ -50,6 +53,8 @@ export default function TicketForm({
   onPresetAgencySelect,
   onApplyDefaultAgency,
   onGenerateRandomAgency,
+  agencyMode,
+  onAgencyModeChange,
   isBaggageManualEdit,
   onToggleBaggageManualEdit,
   isReadOnly,
@@ -94,14 +99,24 @@ export default function TicketForm({
               </TextField>
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                <Button variant="outlined" onClick={onApplyDefaultAgency}>
-                  Use Default Agency + Default Logo
-                </Button>
-                <Button variant="contained" onClick={onGenerateRandomAgency}>
-                  Generate Random Agency + Random Logo
-                </Button>
-              </Stack>
+              <Typography sx={{ fontSize: 12, color: '#64748b', mb: 0.7 }}>
+                Agency + Logo Mode
+              </Typography>
+              <ToggleButtonGroup
+                fullWidth
+                exclusive
+                value={agencyMode}
+                onChange={(_, nextValue) => {
+                  if (!nextValue) return;
+                  onAgencyModeChange(nextValue);
+                  if (nextValue === 'default') onApplyDefaultAgency();
+                  if (nextValue === 'random') onGenerateRandomAgency();
+                }}
+                size="small"
+              >
+                <ToggleButton value="default">🏢 Default Agency + Logo</ToggleButton>
+                <ToggleButton value="random">🎲 Random Agency + Logo</ToggleButton>
+              </ToggleButtonGroup>
             </Grid>
             <Grid size={{ xs: 12 }}>
               <TextField
@@ -149,8 +164,13 @@ export default function TicketForm({
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <Button variant="outlined" component="label" size="small">
-                Upload Custom Logo
+              <ToggleButton
+                value="upload"
+                component="label"
+                selected={false}
+                sx={{ width: '100%', justifyContent: 'center', textTransform: 'none' }}
+              >
+                🖼️ Upload Custom Logo
                 <input
                   hidden
                   type="file"
@@ -161,7 +181,7 @@ export default function TicketForm({
                     event.currentTarget.value = '';
                   }}
                 />
-              </Button>
+              </ToggleButton>
             </Grid>
           </Grid>
         </Box>
