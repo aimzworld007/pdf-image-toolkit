@@ -5,6 +5,73 @@ const FLIGHT_HOURS_AHEAD = 6;
 const ARRIVAL_HOURS_AFTER_DEPARTURE = 5;
 const TAX_RATE = 0.2483333333;
 
+export const DEFAULT_AGENCY_LOGO = '/default-agency-logo.png';
+export const GENERATED_AGENCY_LOGO = '/generated-agency-logo.jpg';
+
+export interface AgencyProfile {
+  name: string;
+  address: string;
+  email: string;
+  tel: string;
+}
+
+export const AGENCY_PRESETS: AgencyProfile[] = [
+  {
+    name: 'Al Raha Tours-Sharjah',
+    address: 'Near Al Madeena Hypermarket, Al Zahra St, Rolla, Sharjah, UAE',
+    email: 'info@alrahatours.com',
+    tel: '+971 50 165 0070',
+  },
+  {
+    name: 'Joelle Travel Services',
+    address: 'Office 304, Al Maha Tower Block A, Al Taawun Street, Sharjah, UAE',
+    email: 'info@joelletravel.com',
+    tel: '+971 52 235 3358',
+  },
+  {
+    name: 'Go Kite Travel & Tours Sharjah',
+    address: 'Shuwaihean Building, Shop 29/30, Al Ghuwair, Sharjah, UAE',
+    email: 'info@gokite.travel',
+    tel: '+971 50 229 8658',
+  },
+  {
+    name: 'Smart Travel',
+    address: '2 24th Street, Bu Shaghara, Hay Al Qasimiah, Sharjah, UAE',
+    email: 'info@smarttravel.ae',
+    tel: '+971 6 522 7477',
+  },
+  {
+    name: 'Smart Travel (Head Office)',
+    address: 'Tower 400, 19th Floor, Al Soor, Sharjah, UAE',
+    email: 'info@smarttravel.ae',
+    tel: '+971 6 531 3533',
+  },
+  {
+    name: 'Muwaileh Tourism | visa services | travel agency | Sharjah',
+    address: 'Fire Station Road, Muwaileh Commercial Industrial Area, Sharjah, UAE',
+    email: 'info@muwailehtourism.com',
+    tel: '+971 6 535 3855',
+  },
+  {
+    name: 'Seventh Sea holidays Travel Agency Sharjah',
+    address: 'Sharjah Publishing City, Muwaileh Commercial, Al Zahia, Sharjah, UAE',
+    email: 'info@seventhseaholidays.com',
+    tel: '+971 55 253 9022',
+  },
+  {
+    name: 'Mardan Express Travels And Tourism Sharjah',
+    address: 'Shop #04, Building #443, Fire Station Road, Muwaileh, Sharjah, UAE',
+    email: 'info@mardantravels.com',
+    tel: '+971 50 775 7658',
+  },
+  {
+    name: 'Arooha Tours',
+    address: 'Ground Floor Shop 09, Al Arouba Building, Al Arouba Street, Rolla, Sharjah',
+    email: 'contact@aroohatours.com',
+    tel: '+971 56 828 3111',
+  },
+];
+
 export interface AirlineOption {
   name: string;
   iata: string;
@@ -158,12 +225,14 @@ export function getDefaultTicketData(): DemoTicketData {
   const defaultTax = calculateTaxFromBaseFare(defaultBaseFare);
   const defaultTotal = calculateTotalFareFromBaseFare(defaultBaseFare);
 
+  const defaultAgency = AGENCY_PRESETS[0];
+
   return {
-    agencyName: 'HABAT AL LULU TYPING & DOCUMENTS COPYING',
-    agencyAddress: 'POLIMAR BUILDING SHOP S06A, INDUSTRIAL AREA 1, SHARJAH, UAE',
-    agencyTel: '0555997270',
-    agencyEmail: 'habatallulu.typing@gmail.com',
-    agencyLogoUrl: '/default-agency-logo.png',
+    agencyName: defaultAgency.name,
+    agencyAddress: defaultAgency.address,
+    agencyTel: defaultAgency.tel,
+    agencyEmail: defaultAgency.email,
+    agencyLogoUrl: DEFAULT_AGENCY_LOGO,
     passengerName: 'MD SUMON SHEIK',
     bookingDate: toDateTimeLocalValue(now),
     fromLocation: 'Dubai [DXB]',
@@ -186,6 +255,22 @@ export function getDefaultTicketData(): DemoTicketData {
     totalFare: defaultTotal,
     status: 'CONFIRMED',
   };
+}
+
+export function applyAgencyProfileToTicket(data: DemoTicketData, profile: AgencyProfile, logoUrl: string): DemoTicketData {
+  return {
+    ...data,
+    agencyName: profile.name,
+    agencyAddress: profile.address,
+    agencyEmail: profile.email,
+    agencyTel: profile.tel,
+    agencyLogoUrl: logoUrl,
+  };
+}
+
+export function getRandomAgencyProfile(): AgencyProfile {
+  const index = Math.floor(Math.random() * AGENCY_PRESETS.length);
+  return AGENCY_PRESETS[index];
 }
 
 export function formatDateTime(value: string): string {

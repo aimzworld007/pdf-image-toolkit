@@ -14,6 +14,7 @@ import {
 import { DemoTicketData, TicketStatus } from './ticketTypes';
 import {
   AIRLINE_OPTIONS,
+  AGENCY_PRESETS,
   CHECKIN_BAGGAGE_OPTIONS,
   DESTINATION_OPTIONS,
   TRAVEL_CLASS_OPTIONS,
@@ -26,10 +27,14 @@ interface TicketFormProps {
   onLogoUpload: (file: File | null) => void;
   onAirlineChange: (airlineName: string) => void;
   onTravelClassChange: (travelClass: string) => void;
+  onPresetAgencySelect: (agencyName: string) => void;
+  onApplyDefaultAgency: () => void;
+  onGenerateRandomAgency: () => void;
 }
 
 const STATUS_OPTIONS: TicketStatus[] = ['CONFIRMED', 'PENDING', 'ON HOLD', 'CANCELLED'];
 const AIRLINE_NAME_OPTIONS = AIRLINE_OPTIONS.map((item) => item.name);
+const CUSTOM_PRESET_VALUE = '__CUSTOM__';
 
 export default function TicketForm({
   data,
@@ -37,6 +42,9 @@ export default function TicketForm({
   onLogoUpload,
   onAirlineChange,
   onTravelClassChange,
+  onPresetAgencySelect,
+  onApplyDefaultAgency,
+  onGenerateRandomAgency,
 }: TicketFormProps) {
   return (
     <Paper elevation={0} sx={{ p: 2.2, borderRadius: 2, border: '1px solid #dbe3f2', bgcolor: '#ffffff' }}>
@@ -50,6 +58,36 @@ export default function TicketForm({
             Agency Details (Customizable)
           </Typography>
           <Grid container spacing={1.4}>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Agency Preset List"
+                select
+                value={AGENCY_PRESETS.some((agency) => agency.name === data.agencyName) ? data.agencyName : CUSTOM_PRESET_VALUE}
+                onChange={(event) => {
+                  if (event.target.value === CUSTOM_PRESET_VALUE) return;
+                  onPresetAgencySelect(event.target.value);
+                }}
+              >
+                <MenuItem value={CUSTOM_PRESET_VALUE}>Custom (Manual Edit)</MenuItem>
+                {AGENCY_PRESETS.map((agency) => (
+                  <MenuItem key={agency.name} value={agency.name}>
+                    {agency.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                <Button variant="outlined" onClick={onApplyDefaultAgency}>
+                  Use Default Agency + Default Logo
+                </Button>
+                <Button variant="contained" onClick={onGenerateRandomAgency}>
+                  Generate Random Agency + Random Logo
+                </Button>
+              </Stack>
+            </Grid>
             <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth

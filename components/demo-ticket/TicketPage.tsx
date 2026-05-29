@@ -16,9 +16,14 @@ import TicketForm from './TicketForm';
 import TicketPreview from './TicketPreview';
 import { DemoTicketData } from './ticketTypes';
 import {
+  AGENCY_PRESETS,
+  DEFAULT_AGENCY_LOGO,
+  GENERATED_AGENCY_LOGO,
+  applyAgencyProfileToTicket,
   calculateTaxFromBaseFare,
   calculateTotalFareFromBaseFare,
   getCabinBaggageByAirlineAndClass,
+  getRandomAgencyProfile,
   generateAlphaNumericCode,
   generateBarcodeDataUrl,
   generateDemoReferenceNumber,
@@ -71,6 +76,22 @@ export default function TicketPage() {
       travelClass,
       cabinBaggage: getCabinBaggageByAirlineAndClass(current.airline, travelClass),
     }));
+  };
+
+  const handlePresetAgencySelect = (agencyName: string) => {
+    const profile = AGENCY_PRESETS.find((agency) => agency.name === agencyName);
+    if (!profile) return;
+    setFormData((current) => applyAgencyProfileToTicket(current, profile, current.agencyLogoUrl || DEFAULT_AGENCY_LOGO));
+  };
+
+  const handleApplyDefaultAgency = () => {
+    const defaultAgency = AGENCY_PRESETS[0];
+    setFormData((current) => applyAgencyProfileToTicket(current, defaultAgency, DEFAULT_AGENCY_LOGO));
+  };
+
+  const handleGenerateRandomAgency = () => {
+    const randomAgency = getRandomAgencyProfile();
+    setFormData((current) => applyAgencyProfileToTicket(current, randomAgency, GENERATED_AGENCY_LOGO));
   };
 
   const handleAutoCalculateTotal = () => {
@@ -201,6 +222,9 @@ export default function TicketPage() {
               onLogoUpload={handleLogoUpload}
               onAirlineChange={handleAirlineChange}
               onTravelClassChange={handleTravelClassChange}
+              onPresetAgencySelect={handlePresetAgencySelect}
+              onApplyDefaultAgency={handleApplyDefaultAgency}
+              onGenerateRandomAgency={handleGenerateRandomAgency}
             />
 
             <Paper elevation={0} sx={{ p: 1.6, borderRadius: 2, border: '1px solid #dbe3f2', bgcolor: '#ffffff' }}>
