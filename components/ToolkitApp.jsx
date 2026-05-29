@@ -1,48 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { CATEGORY_PATHS, TOOL_SECTIONS } from './toolkit/toolRegistry';
-
-function ToolLoading() {
-  return (
-    <div className="panel">
-      <p className="status">Loading tool...</p>
-    </div>
-  );
-}
-
-const TOOL_COMPONENTS = {
-  'jpg-to-pdf': dynamic(() => import('./toolkit/tools/JpgToPdfTool'), { ssr: false, loading: ToolLoading }),
-  'pdf-workbench': dynamic(() => import('./toolkit/tools/PdfWorkbenchTool'), { ssr: false, loading: ToolLoading }),
-  'pdf-to-jpg': dynamic(() => import('./toolkit/tools/PdfToJpgTool'), { ssr: false, loading: ToolLoading }),
-  'combine-pdfs': dynamic(() => import('./toolkit/tools/CombinePdfsTool'), { ssr: false, loading: ToolLoading }),
-  'images-to-pdf': dynamic(() => import('./toolkit/tools/ImagesToPdfTool'), { ssr: false, loading: ToolLoading }),
-  'compress-jpg': dynamic(() => import('./toolkit/tools/CompressJpgTool'), { ssr: false, loading: ToolLoading }),
-  'resize-image': dynamic(() => import('./toolkit/tools/ResizeImageTool'), { ssr: false, loading: ToolLoading }),
-  'resize-by-size': dynamic(() => import('./toolkit/tools/ResizeBySizeTool'), { ssr: false, loading: ToolLoading }),
-  'crop-image': dynamic(() => import('./toolkit/tools/CropImageTool'), { ssr: false, loading: ToolLoading }),
-  'merge-images': dynamic(() => import('./toolkit/tools/MergeImagesTool'), { ssr: false, loading: ToolLoading }),
-  'convert-image': dynamic(() => import('./toolkit/tools/ConvertImageTool'), { ssr: false, loading: ToolLoading }),
-  'enhance-image': dynamic(() => import('./toolkit/tools/ImageEnhanceTool'), { ssr: false, loading: ToolLoading }),
-  'background-remover': dynamic(() => import('./toolkit/tools/BackgroundRemoverTool'), { ssr: false, loading: ToolLoading }),
-  'qr-code-generator': dynamic(() => import('./toolkit/tools/QrCodeGeneratorTool'), { ssr: false, loading: ToolLoading }),
-  'signature-generator': dynamic(() => import('./toolkit/tools/SignatureGeneratorTool'), { ssr: false, loading: ToolLoading }),
-  'pdf-page-studio': dynamic(() => import('./toolkit/tools/PdfPageStudioTool'), { ssr: false, loading: ToolLoading }),
-  'extract-pdf-images': dynamic(() => import('./toolkit/tools/ExtractPdfImagesTool'), { ssr: false, loading: ToolLoading }),
-  'certificate-form-filler': dynamic(() => import('./toolkit/tools/CertificateFormFillerTool'), { ssr: false, loading: ToolLoading }),
-  'compress-pdf': dynamic(() => import('./toolkit/tools/CompressPdfTool'), { ssr: false, loading: ToolLoading }),
-  'print-photo-pdf': dynamic(() => import('./toolkit/tools/PrintPhotoPdfTool'), { ssr: false, loading: ToolLoading }),
-  'passport-photo-maker': dynamic(() => import('./toolkit/tools/PassportPhotoMakerTool'), { ssr: false, loading: ToolLoading }),
-  'eid-lamination': dynamic(() => import('./toolkit/tools/EidLaminationTool'), { ssr: false, loading: ToolLoading }),
-};
-
-function renderTool(activeTool, onBack) {
-  const ActiveTool = TOOL_COMPONENTS[activeTool];
-  return ActiveTool ? <ActiveTool onBack={onBack} /> : null;
-}
+import { renderTool } from './toolkit/toolComponents';
 
 export default function ToolkitApp({ category = 'all', title, subtitle, activeToolId = null }) {
   const [activeTool, setActiveTool] = useState(null);

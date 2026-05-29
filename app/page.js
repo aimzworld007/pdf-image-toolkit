@@ -21,6 +21,11 @@ const HOME_CATEGORIES = [
     title: 'Photo Print Tools',
     desc: 'Auto-grid photo print sheets for direct printer output.',
   },
+  {
+    href: '/demo-ticket-generator',
+    title: 'Demo Ticket Generator',
+    desc: 'Create, preview, print, and export professional itinerary-style demo tickets.',
+  },
 ];
 
 const EXTERNAL_TOOLS = [
