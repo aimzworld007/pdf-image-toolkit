@@ -1,17 +1,43 @@
 'use client';
 
-import { Box, Button, Grid, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material';
+import {
+  Autocomplete,
+  Box,
+  Button,
+  Grid,
+  MenuItem,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { DemoTicketData, TicketStatus } from './ticketTypes';
+import {
+  AIRLINE_OPTIONS,
+  CHECKIN_BAGGAGE_OPTIONS,
+  DESTINATION_OPTIONS,
+  TRAVEL_CLASS_OPTIONS,
+  UAE_ORIGIN_OPTIONS,
+} from './demoTicketUtils';
 
 interface TicketFormProps {
   data: DemoTicketData;
   onFieldChange: (field: keyof DemoTicketData, value: string) => void;
   onLogoUpload: (file: File | null) => void;
+  onAirlineChange: (airlineName: string) => void;
+  onTravelClassChange: (travelClass: string) => void;
 }
 
 const STATUS_OPTIONS: TicketStatus[] = ['CONFIRMED', 'PENDING', 'ON HOLD', 'CANCELLED'];
+const AIRLINE_NAME_OPTIONS = AIRLINE_OPTIONS.map((item) => item.name);
 
-export default function TicketForm({ data, onFieldChange, onLogoUpload }: TicketFormProps) {
+export default function TicketForm({
+  data,
+  onFieldChange,
+  onLogoUpload,
+  onAirlineChange,
+  onTravelClassChange,
+}: TicketFormProps) {
   return (
     <Paper elevation={0} sx={{ p: 2.2, borderRadius: 2, border: '1px solid #dbe3f2', bgcolor: '#ffffff' }}>
       <Stack spacing={2}>
@@ -113,12 +139,15 @@ export default function TicketForm({ data, onFieldChange, onLogoUpload }: Ticket
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                size="small"
-                label="Airline"
+              <Autocomplete
+                freeSolo
+                options={AIRLINE_NAME_OPTIONS}
                 value={data.airline}
-                onChange={(event) => onFieldChange('airline', event.target.value)}
+                onChange={(_, value) => onAirlineChange(value || '')}
+                onInputChange={(_, value, reason) => {
+                  if (reason === 'input' || reason === 'clear') onAirlineChange(value);
+                }}
+                renderInput={(params) => <TextField {...params} size="small" label="Airline (Dropdown + Custom)" />}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -146,12 +175,15 @@ export default function TicketForm({ data, onFieldChange, onLogoUpload }: Ticket
           </Typography>
           <Grid container spacing={1.4}>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                size="small"
-                label="From City / Airport"
+              <Autocomplete
+                freeSolo
+                options={UAE_ORIGIN_OPTIONS}
                 value={data.fromLocation}
-                onChange={(event) => onFieldChange('fromLocation', event.target.value)}
+                onChange={(_, value) => onFieldChange('fromLocation', value || '')}
+                onInputChange={(_, value, reason) => {
+                  if (reason === 'input' || reason === 'clear') onFieldChange('fromLocation', value);
+                }}
+                renderInput={(params) => <TextField {...params} size="small" label="From (UAE Origin)" />}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -164,12 +196,15 @@ export default function TicketForm({ data, onFieldChange, onLogoUpload }: Ticket
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                size="small"
-                label="To City / Airport"
+              <Autocomplete
+                freeSolo
+                options={DESTINATION_OPTIONS}
                 value={data.toLocation}
-                onChange={(event) => onFieldChange('toLocation', event.target.value)}
+                onChange={(_, value) => onFieldChange('toLocation', value || '')}
+                onInputChange={(_, value, reason) => {
+                  if (reason === 'input' || reason === 'clear') onFieldChange('toLocation', value);
+                }}
+                renderInput={(params) => <TextField {...params} size="small" label="To Destination" />}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -207,9 +242,9 @@ export default function TicketForm({ data, onFieldChange, onLogoUpload }: Ticket
               <TextField
                 fullWidth
                 size="small"
-                label="Flight Number"
+                label="Flight Number (Auto)"
                 value={data.flightNumber}
-                onChange={(event) => onFieldChange('flightNumber', event.target.value)}
+                slotProps={{ input: { readOnly: true } }}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
@@ -217,9 +252,16 @@ export default function TicketForm({ data, onFieldChange, onLogoUpload }: Ticket
                 fullWidth
                 size="small"
                 label="Travel Class"
+                select
                 value={data.travelClass}
-                onChange={(event) => onFieldChange('travelClass', event.target.value)}
-              />
+                onChange={(event) => onTravelClassChange(event.target.value)}
+              >
+                {TRAVEL_CLASS_OPTIONS.map((travelClass) => (
+                  <MenuItem key={travelClass} value={travelClass}>
+                    {travelClass}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
@@ -243,17 +285,24 @@ export default function TicketForm({ data, onFieldChange, onLogoUpload }: Ticket
                 fullWidth
                 size="small"
                 label="Check-in Baggage"
+                select
                 value={data.checkInBaggage}
                 onChange={(event) => onFieldChange('checkInBaggage', event.target.value)}
-              />
+              >
+                {CHECKIN_BAGGAGE_OPTIONS.map((item) => (
+                  <MenuItem key={item} value={item}>
+                    {item}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 size="small"
-                label="Cabin Baggage"
+                label="Cabin Baggage (Airline Policy)"
                 value={data.cabinBaggage}
-                onChange={(event) => onFieldChange('cabinBaggage', event.target.value)}
+                slotProps={{ input: { readOnly: true } }}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -286,19 +335,13 @@ export default function TicketForm({ data, onFieldChange, onLogoUpload }: Ticket
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
-              <TextField
-                fullWidth
-                size="small"
-                label="Tax"
-                value={data.tax}
-                slotProps={{ input: { readOnly: true } }}
-              />
+              <TextField fullWidth size="small" label="Tax (Auto)" value={data.tax} slotProps={{ input: { readOnly: true } }} />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 size="small"
-                label="Total Fare"
+                label="Total Fare (Auto)"
                 value={data.totalFare}
                 slotProps={{ input: { readOnly: true } }}
               />

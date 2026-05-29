@@ -5,6 +5,61 @@ const FLIGHT_HOURS_AHEAD = 6;
 const ARRIVAL_HOURS_AFTER_DEPARTURE = 5;
 const TAX_RATE = 0.2483333333;
 
+export interface AirlineOption {
+  name: string;
+  iata: string;
+  economyCabinBaggage: string;
+  businessCabinBaggage: string;
+}
+
+export const AIRLINE_OPTIONS: AirlineOption[] = [
+  { name: 'Flydubai', iata: 'FZ', economyCabinBaggage: '7 Kg', businessCabinBaggage: '14 Kg (2x7 Kg)' },
+  { name: 'Emirates', iata: 'EK', economyCabinBaggage: '7 Kg', businessCabinBaggage: '14 Kg (2x7 Kg)' },
+  { name: 'Etihad Airways', iata: 'EY', economyCabinBaggage: '12 Kg (max 2 pieces)', businessCabinBaggage: '12 Kg (max 2 pieces)' },
+  { name: 'Air Arabia', iata: 'G9', economyCabinBaggage: '10 Kg (7+3 Kg)', businessCabinBaggage: '10 Kg (7+3 Kg)' },
+  { name: 'Biman Bangladesh Airlines', iata: 'BG', economyCabinBaggage: '7 Kg', businessCabinBaggage: '14 Kg (2x7 Kg)' },
+  { name: 'US-Bangla Airlines', iata: 'BS', economyCabinBaggage: '7 Kg', businessCabinBaggage: '10 Kg' },
+  { name: 'Air India', iata: 'AI', economyCabinBaggage: '7 Kg', businessCabinBaggage: '10 Kg' },
+  { name: 'IndiGo', iata: '6E', economyCabinBaggage: '7 Kg', businessCabinBaggage: '7 Kg' },
+  { name: 'Pakistan International Airlines', iata: 'PK', economyCabinBaggage: '7 Kg', businessCabinBaggage: '12 Kg' },
+  { name: 'Ethiopian Airlines', iata: 'ET', economyCabinBaggage: '7 Kg', businessCabinBaggage: '14 Kg (2x7 Kg)' },
+  { name: 'Uganda Airlines', iata: 'UR', economyCabinBaggage: '7 Kg', businessCabinBaggage: '14 Kg (2x7 Kg)' },
+];
+
+export const TRAVEL_CLASS_OPTIONS = ['Economy', 'Premium Economy', 'Business', 'First'];
+
+export const CHECKIN_BAGGAGE_OPTIONS = ['20 Kg', '25 Kg', '30 Kg', '35 Kg', '40 Kg', '46 Kg'];
+
+export const UAE_ORIGIN_OPTIONS = [
+  'Dubai [DXB]',
+  'Dubai Al Maktoum [DWC]',
+  'Abu Dhabi [AUH]',
+  'Sharjah [SHJ]',
+  'Ras Al Khaimah [RKT]',
+  'Al Ain [AAN]',
+];
+
+export const DESTINATION_OPTIONS = [
+  'Dhaka [DAC] - Bangladesh',
+  'Chattogram [CGP] - Bangladesh',
+  'Sylhet [ZYL] - Bangladesh',
+  'Delhi [DEL] - India',
+  'Mumbai [BOM] - India',
+  'Kolkata [CCU] - India',
+  'Kochi [COK] - India',
+  'Kozhikode [CCJ] - India',
+  'Hyderabad [HYD] - India',
+  'Karachi [KHI] - Pakistan',
+  'Lahore [LHE] - Pakistan',
+  'Islamabad [ISB] - Pakistan',
+  'Peshawar [PEW] - Pakistan',
+  'Sialkot [SKT] - Pakistan',
+  'Addis Ababa [ADD] - Ethiopia',
+  'Entebbe [EBB] - Uganda',
+  'Nairobi [NBO] - Kenya',
+  'Dar es Salaam [DAR] - Tanzania',
+];
+
 function pad(value: number): string {
   return String(value).padStart(2, '0');
 }
@@ -41,6 +96,59 @@ export function generateDummyTicketNumber(): string {
   return code;
 }
 
+function randomFlightDigits(): string {
+  const number = Math.floor(100 + Math.random() * 900);
+  return String(number);
+}
+
+export function normalizeAirlineName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+export function getAirlineOptionByName(name: string): AirlineOption | null {
+  const normalized = normalizeAirlineName(name);
+  if (!normalized) return null;
+
+  const exact = AIRLINE_OPTIONS.find((option) => normalizeAirlineName(option.name) === normalized);
+  if (exact) return exact;
+
+  const partial = AIRLINE_OPTIONS.find((option) =>
+    normalizeAirlineName(option.name).includes(normalized) || normalized.includes(normalizeAirlineName(option.name))
+  );
+  return partial || null;
+}
+
+export function deriveIataCodeForCustomAirline(airlineName: string): string {
+  const cleaned = airlineName.replace(/[^A-Za-z0-9 ]/g, ' ').trim();
+  if (!cleaned) return 'XX';
+
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  if (words.length === 1) {
+    const token = words[0].toUpperCase().slice(0, 2);
+    return token.length === 2 ? token : `${token}X`.slice(0, 2);
+  }
+
+  const letters = `${words[0][0] ?? 'X'}${words[1][0] ?? 'X'}`.toUpperCase();
+  return letters;
+}
+
+export function generateFlightNumberFromAirline(airlineName: string): string {
+  const match = getAirlineOptionByName(airlineName);
+  const iata = match?.iata || deriveIataCodeForCustomAirline(airlineName);
+  return `${iata} ${randomFlightDigits()}`;
+}
+
+export function getCabinBaggageByAirlineAndClass(airlineName: string, travelClass: string): string {
+  const option = getAirlineOptionByName(airlineName);
+  if (!option) return '7 Kg';
+
+  const normalizedClass = travelClass.trim().toLowerCase();
+  if (normalizedClass === 'business' || normalizedClass === 'first') {
+    return option.businessCabinBaggage;
+  }
+  return option.economyCabinBaggage;
+}
+
 export function getDefaultTicketData(): DemoTicketData {
   const now = new Date();
   const departure = new Date(now.getTime() + FLIGHT_HOURS_AHEAD * 60 * 60 * 1000);
@@ -64,12 +172,12 @@ export function getDefaultTicketData(): DemoTicketData {
     toTerminal: 'Terminal 1',
     departureDateTime: toDateTimeLocalValue(departure),
     arrivalDateTime: toDateTimeLocalValue(arrival),
-    airline: 'FLYDUBAI',
+    airline: 'Flydubai',
     flightNumber: 'FZ 501',
     travelClass: 'Economy',
     stops: 'Non Stop',
-    checkInBaggage: 'Adult - 40 Kg',
-    cabinBaggage: 'Adult - 7 Kg',
+    checkInBaggage: '40 Kg',
+    cabinBaggage: '7 Kg',
     baggage: 'Baggage Allowance: Adult - 40 Kg',
     baggageNotes:
       'Bag 1 Chg May Apply If Bags Exceed TI Wt Allowance\nBag 2 Chgs May Apply If Bags Exceed TI Wt Allowance\nRefer to airline baggage policy for further details.',

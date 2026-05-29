@@ -18,9 +18,11 @@ import { DemoTicketData } from './ticketTypes';
 import {
   calculateTaxFromBaseFare,
   calculateTotalFareFromBaseFare,
+  getCabinBaggageByAirlineAndClass,
   generateAlphaNumericCode,
   generateBarcodeDataUrl,
   generateDemoReferenceNumber,
+  generateFlightNumberFromAirline,
   generateDummyTicketNumber,
   getDefaultTicketData,
 } from './demoTicketUtils';
@@ -48,6 +50,27 @@ export default function TicketPage() {
       }
       return next;
     });
+  };
+
+  const handleAirlineChange = (airlineName: string) => {
+    setFormData((current) => {
+      const nextAirline = airlineName || '';
+      const nextClass = current.travelClass || 'Economy';
+      return {
+        ...current,
+        airline: nextAirline,
+        flightNumber: generateFlightNumberFromAirline(nextAirline),
+        cabinBaggage: getCabinBaggageByAirlineAndClass(nextAirline, nextClass),
+      };
+    });
+  };
+
+  const handleTravelClassChange = (travelClass: string) => {
+    setFormData((current) => ({
+      ...current,
+      travelClass,
+      cabinBaggage: getCabinBaggageByAirlineAndClass(current.airline, travelClass),
+    }));
   };
 
   const handleAutoCalculateTotal = () => {
@@ -172,7 +195,13 @@ export default function TicketPage() {
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 5 }} className="no-print">
           <Stack spacing={1.4}>
-            <TicketForm data={formData} onFieldChange={handleFieldChange} onLogoUpload={handleLogoUpload} />
+            <TicketForm
+              data={formData}
+              onFieldChange={handleFieldChange}
+              onLogoUpload={handleLogoUpload}
+              onAirlineChange={handleAirlineChange}
+              onTravelClassChange={handleTravelClassChange}
+            />
 
             <Paper elevation={0} sx={{ p: 1.6, borderRadius: 2, border: '1px solid #dbe3f2', bgcolor: '#ffffff' }}>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
