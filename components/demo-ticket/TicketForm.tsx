@@ -17,9 +17,59 @@ export default function TicketForm({ data, onFieldChange }: TicketFormProps) {
         <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a' }}>
           Ticket Input Form
         </Typography>
-        <Typography variant="body2" sx={{ color: '#64748b' }}>
-          Fill details below. Preview updates live on the right.
-        </Typography>
+
+        <Box>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: '#334155' }}>
+            Agency Details (Customizable)
+          </Typography>
+          <Grid container spacing={1.4}>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Agency Name"
+                value={data.agencyName}
+                onChange={(event) => onFieldChange('agencyName', event.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Agency Address"
+                value={data.agencyAddress}
+                onChange={(event) => onFieldChange('agencyAddress', event.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Agency Tel"
+                value={data.agencyTel}
+                onChange={(event) => onFieldChange('agencyTel', event.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Agency Email"
+                value={data.agencyEmail}
+                onChange={(event) => onFieldChange('agencyEmail', event.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Logo URL (default included)"
+                value={data.agencyLogoUrl}
+                onChange={(event) => onFieldChange('agencyLogoUrl', event.target.value)}
+              />
+            </Grid>
+          </Grid>
+        </Box>
 
         <Box>
           <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: '#334155' }}>
@@ -137,7 +187,7 @@ export default function TicketForm({ data, onFieldChange }: TicketFormProps) {
                 slotProps={{ inputLabel: { shrink: true } }}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -146,13 +196,22 @@ export default function TicketForm({ data, onFieldChange }: TicketFormProps) {
                 onChange={(event) => onFieldChange('flightNumber', event.target.value)}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 size="small"
-                label="Baggage"
-                value={data.baggage}
-                onChange={(event) => onFieldChange('baggage', event.target.value)}
+                label="Travel Class"
+                value={data.travelClass}
+                onChange={(event) => onFieldChange('travelClass', event.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Stops"
+                value={data.stops}
+                onChange={(event) => onFieldChange('stops', event.target.value)}
               />
             </Grid>
           </Grid>
@@ -160,10 +219,48 @@ export default function TicketForm({ data, onFieldChange }: TicketFormProps) {
 
         <Box>
           <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, color: '#334155' }}>
-            Fare Details
+            Baggage and Fare
           </Typography>
           <Grid container spacing={1.4}>
-            <Grid size={{ xs: 12, sm: 4 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Check-in Baggage"
+                value={data.checkInBaggage}
+                onChange={(event) => onFieldChange('checkInBaggage', event.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Cabin Baggage"
+                value={data.cabinBaggage}
+                onChange={(event) => onFieldChange('cabinBaggage', event.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Baggage Title (Manual)"
+                value={data.baggage}
+                onChange={(event) => onFieldChange('baggage', event.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                minRows={3}
+                label="Baggage Notes (Manual)"
+                value={data.baggageNotes}
+                onChange={(event) => onFieldChange('baggageNotes', event.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -172,7 +269,7 @@ export default function TicketForm({ data, onFieldChange }: TicketFormProps) {
                 onChange={(event) => onFieldChange('baseFare', event.target.value)}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
+            <Grid size={{ xs: 12, sm: 3 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -181,7 +278,16 @@ export default function TicketForm({ data, onFieldChange }: TicketFormProps) {
                 onChange={(event) => onFieldChange('tax', event.target.value)}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="SSR Amount"
+                value={data.ssrAmount}
+                onChange={(event) => onFieldChange('ssrAmount', event.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
               <TextField
                 fullWidth
                 size="small"

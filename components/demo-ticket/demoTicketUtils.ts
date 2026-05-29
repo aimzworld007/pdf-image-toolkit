@@ -1,4 +1,5 @@
 import { DemoTicketData } from './ticketTypes';
+import JsBarcode from 'jsbarcode';
 
 const FLIGHT_HOURS_AHEAD = 6;
 const ARRIVAL_HOURS_AFTER_DEPARTURE = 5;
@@ -21,6 +22,15 @@ export function generateDemoReferenceNumber(): string {
   return `AG${randomDigits}`;
 }
 
+export function generateAlphaNumericCode(length = 6): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < length; i += 1) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
 export function generateDummyTicketNumber(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789';
   let code = 'A2';
@@ -36,6 +46,11 @@ export function getDefaultTicketData(): DemoTicketData {
   const arrival = new Date(departure.getTime() + ARRIVAL_HOURS_AFTER_DEPARTURE * 60 * 60 * 1000);
 
   return {
+    agencyName: 'HABAT AL LULU TYPING & DOCUMENTS COPYING',
+    agencyAddress: 'POLIMAR BUILDING SHOP S06A, INDUSTRIAL AREA 1, SHARJAH, UAE',
+    agencyTel: '0555997270',
+    agencyEmail: 'habatallulu.typing@gmail.com',
+    agencyLogoUrl: '/default-agency-logo.png',
     passengerName: 'MD SUMON SHEIK',
     bookingDate: toDateTimeLocalValue(now),
     fromLocation: 'Dubai [DXB]',
@@ -46,9 +61,16 @@ export function getDefaultTicketData(): DemoTicketData {
     arrivalDateTime: toDateTimeLocalValue(arrival),
     airline: 'FLYDUBAI',
     flightNumber: 'FZ 501',
-    baggage: 'Adult - 40 Kg',
+    travelClass: 'Economy',
+    stops: 'Non Stop',
+    checkInBaggage: 'Adult - 40 Kg',
+    cabinBaggage: 'Adult - 7 Kg',
+    baggage: 'Baggage Allowance: Adult - 40 Kg',
+    baggageNotes:
+      'Bag 1 Chg May Apply If Bags Exceed TI Wt Allowance\nBag 2 Chgs May Apply If Bags Exceed TI Wt Allowance\nRefer to airline baggage policy for further details.',
     baseFare: '600.00',
     tax: '149.00',
+    ssrAmount: '0.00',
     totalFare: '749.00',
     status: 'CONFIRMED',
   };
@@ -78,6 +100,10 @@ export function calculateTotalFare(baseFare: string, tax: string): string {
   return (parseAmount(baseFare) + parseAmount(tax)).toFixed(2);
 }
 
+export function calculateTotalFareWithSsr(baseFare: string, tax: string, ssrAmount: string): string {
+  return (parseAmount(baseFare) + parseAmount(tax) + parseAmount(ssrAmount)).toFixed(2);
+}
+
 export function calculateDuration(departureDateTime: string, arrivalDateTime: string): string {
   const start = new Date(departureDateTime);
   const end = new Date(arrivalDateTime);
@@ -94,4 +120,42 @@ export function calculateDuration(departureDateTime: string, arrivalDateTime: st
 
 export function formatMoney(value: string): string {
   return parseAmount(value).toFixed(2);
+}
+
+export function formatDateOnly(value: string): string {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString(undefined, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+export function formatTimeOnly(value: string): string {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}
+
+export function generateBarcodeDataUrl(text: string): string {
+  if (!text) return '';
+  if (typeof document === 'undefined') return '';
+  const canvas = document.createElement('canvas');
+  JsBarcode(canvas, text, {
+    format: 'CODE128',
+    displayValue: false,
+    margin: 0,
+    width: 1.5,
+    height: 36,
+    background: '#ffffff',
+    lineColor: '#000000',
+  });
+  return canvas.toDataURL('image/png');
 }

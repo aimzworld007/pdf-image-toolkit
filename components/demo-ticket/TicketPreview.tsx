@@ -1,25 +1,17 @@
 'use client';
 
-import {
-  Box,
-  Chip,
-  Divider,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material';
+import { Box, Chip, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import { RefObject } from 'react';
 import { DemoTicketData } from './ticketTypes';
-import { calculateDuration, formatDateTime, formatMoney } from './demoTicketUtils';
+import { calculateDuration, formatDateOnly, formatDateTime, formatMoney, formatTimeOnly } from './demoTicketUtils';
 
 interface TicketPreviewProps {
   data: DemoTicketData;
   referenceNumber: string;
   ticketNumber: string;
+  airlineRef: string;
+  crsRef: string;
+  barcodeDataUrl: string;
   previewRef: RefObject<HTMLDivElement | null>;
 }
 
@@ -33,6 +25,9 @@ export default function TicketPreview({
   data,
   referenceNumber,
   ticketNumber,
+  airlineRef,
+  crsRef,
+  barcodeDataUrl,
   previewRef,
 }: TicketPreviewProps) {
   return (
@@ -44,186 +39,221 @@ export default function TicketPreview({
         width: '100%',
         maxWidth: '210mm',
         mx: 'auto',
-        borderRadius: 1,
-        border: '1px solid #aeb9c8',
+        borderRadius: 0,
+        border: '1px solid #b9c2d0',
         bgcolor: '#ffffff',
         color: '#111827',
-        p: { xs: 1.2, sm: 1.6 },
+        p: { xs: 1, sm: 1.2 },
       }}
     >
-      <Box
-        sx={{
-          border: '1px solid #cfd8e3',
-          p: 1.1,
-          bgcolor: '#f8fafc',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 1,
-        }}
-      >
-        <Box>
-          <Typography variant="h5" sx={{ lineHeight: 1, fontWeight: 800, letterSpacing: 1.1 }}>
-            DEMO TICKET
+      <Box sx={{ border: '1px solid #cfd8e3' }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '180px 1fr' }, gap: 1, p: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #dbe3f2' }}>
+            <Box
+              component="img"
+              src={data.agencyLogoUrl || '/default-agency-logo.png'}
+              alt="Agency Logo"
+              sx={{ width: '100%', maxWidth: 150, maxHeight: 60, objectFit: 'contain', p: 0.5 }}
+            />
+          </Box>
+          <Box sx={{ fontSize: 11, lineHeight: 1.45 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '80px 1fr', borderBottom: '1px solid #e2e8f0', py: 0.3 }}>
+              <Typography sx={{ fontSize: 11, color: '#475569' }}>Name</Typography>
+              <Typography sx={{ fontSize: 11, fontWeight: 700 }}>{data.agencyName || '-'}</Typography>
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '80px 1fr', borderBottom: '1px solid #e2e8f0', py: 0.3 }}>
+              <Typography sx={{ fontSize: 11, color: '#475569' }}>Address</Typography>
+              <Typography sx={{ fontSize: 11 }}>{data.agencyAddress || '-'}</Typography>
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '80px 1fr', borderBottom: '1px solid #e2e8f0', py: 0.3 }}>
+              <Typography sx={{ fontSize: 11, color: '#475569' }}>Tel</Typography>
+              <Typography sx={{ fontSize: 11 }}>{data.agencyTel || '-'}</Typography>
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '80px 1fr', py: 0.3 }}>
+              <Typography sx={{ fontSize: 11, color: '#475569' }}>Email</Typography>
+              <Typography sx={{ fontSize: 11 }}>{data.agencyEmail || '-'}</Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        <Table size="small" sx={{ borderTop: '1px solid #dbe3f2', '& .MuiTableCell-root': { fontSize: 11, py: 0.8 } }}>
+          <TableBody>
+            <TableRow>
+              <TableCell sx={{ width: '28%', borderRight: '1px solid #dbe3f2' }}>
+                <Typography sx={{ fontSize: 10, color: '#475569' }}>Ref. No:</Typography>
+                <Typography sx={{ fontSize: 16, fontWeight: 700 }}>{referenceNumber}</Typography>
+              </TableCell>
+              <TableCell sx={{ width: '28%', borderRight: '1px solid #dbe3f2' }}>
+                <Typography sx={{ fontSize: 10, color: '#475569' }}>Date of Booking:</Typography>
+                <Typography sx={{ fontWeight: 700 }}>{formatDateOnly(data.bookingDate)}</Typography>
+              </TableCell>
+              <TableCell sx={{ width: '24%', borderRight: '1px solid #dbe3f2' }}>
+                <Typography sx={{ fontSize: 10, color: '#475569' }}>Status:</Typography>
+                <Chip
+                  label={data.status || 'PENDING'}
+                  size="small"
+                  color={getStatusColor(data.status)}
+                  sx={{ fontWeight: 800, mt: 0.4 }}
+                />
+              </TableCell>
+              <TableCell sx={{ width: '20%', textAlign: 'right' }}>
+                <Box
+                  sx={{
+                    display: 'inline-block',
+                    px: 1.1,
+                    py: 0.5,
+                    bgcolor: '#8b0000',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: 11,
+                  }}
+                >
+                  Web check-in
+                </Box>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+
+        <Box sx={{ p: 0.8, borderTop: '1px solid #dbe3f2', bgcolor: '#f8fafc' }}>
+          <Typography sx={{ fontWeight: 800, fontSize: 14 }}>
+            ONWARD &nbsp; {data.fromLocation || '-'} &nbsp; {'>'} &nbsp; {data.toLocation || '-'}
           </Typography>
-          <Typography variant="caption" sx={{ color: '#475569' }}>
-            Professional Itinerary Preview
+          <Typography sx={{ fontSize: 11 }}>
+            {formatDateOnly(data.departureDateTime)} | {data.stops || '-'} | {calculateDuration(data.departureDateTime, data.arrivalDateTime)}
           </Typography>
         </Box>
-        <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
-          <Typography sx={{ fontSize: 12, color: '#64748b' }}>Status</Typography>
-          <Chip
-            label={data.status || 'PENDING'}
-            size="small"
-            color={getStatusColor(data.status)}
-            sx={{ fontWeight: 700, mt: 0.3 }}
-          />
-        </Box>
-      </Box>
 
-      <Table size="small" sx={{ mt: 1, border: '1px solid #dbe3f2' }}>
-        <TableBody>
-          <TableRow>
-            <TableCell sx={{ width: '28%', fontWeight: 700 }}>Ref. No.</TableCell>
-            <TableCell>{referenceNumber}</TableCell>
-            <TableCell sx={{ width: '28%', fontWeight: 700 }}>Date of Booking</TableCell>
-            <TableCell>{formatDateTime(data.bookingDate)}</TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell sx={{ fontWeight: 700 }}>Airline Ref.</TableCell>
-            <TableCell>{referenceNumber}</TableCell>
-            <TableCell sx={{ fontWeight: 700 }}>Ticket No.</TableCell>
-            <TableCell>{ticketNumber}</TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-
-      <Box sx={{ mt: 1.2, border: '1px solid #dbe3f2' }}>
-        <Box
+        <Table
+          size="small"
           sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr auto' },
-            gap: 1,
-            bgcolor: '#eef2f7',
-            borderBottom: '1px solid #dbe3f2',
-            px: 1.1,
-            py: 0.8,
+            '& .MuiTableCell-root': { fontSize: 10.5, py: 0.55, borderColor: '#dbe3f2' },
+            borderTop: '1px solid #dbe3f2',
           }}
         >
-          <Typography sx={{ fontWeight: 800 }}>
-            ONWARD: {data.fromLocation || '-'} to {data.toLocation || '-'}
-          </Typography>
-          <Typography sx={{ fontWeight: 700, color: '#0f766e' }}>
-            Duration: {calculateDuration(data.departureDateTime, data.arrivalDateTime)}
-          </Typography>
-        </Box>
-
-        <Table size="small">
           <TableHead>
+            <TableRow sx={{ bgcolor: '#f0f4f8' }}>
+              <TableCell sx={{ fontWeight: 700 }}>Airline Ref: {airlineRef}</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Travel Class: {data.travelClass || '-'}</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Check-In Baggage: {data.checkInBaggage || '-'}</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Cabin Baggage: {data.cabinBaggage || '-'}</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>CRS Ref: {crsRef}</TableCell>
+            </TableRow>
             <TableRow sx={{ bgcolor: '#f8fafc' }}>
-              <TableCell sx={{ fontWeight: 700 }}>Flight</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Flight Number</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>From (Terminal)</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Departure</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Departure date & time</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>To (Terminal)</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Arrival</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Arrival date & time</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             <TableRow>
               <TableCell>
-                <Typography sx={{ fontWeight: 700 }}>{data.flightNumber || '-'}</Typography>
-                <Typography variant="caption" sx={{ display: 'block' }}>
-                  Operated by {data.airline || '-'}
-                </Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 11 }}>{data.flightNumber || '-'}</Typography>
+                <Typography sx={{ fontSize: 10 }}>Operated by {data.airline || '-'}</Typography>
               </TableCell>
               <TableCell>
-                <Typography sx={{ fontWeight: 700 }}>{data.fromLocation || '-'}</Typography>
-                <Typography variant="caption" sx={{ display: 'block' }}>
-                  {data.fromTerminal || '-'}
-                </Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 11 }}>{data.fromLocation || '-'}</Typography>
+                <Typography sx={{ fontSize: 10 }}>{data.fromTerminal || '-'}</Typography>
               </TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>{formatDateTime(data.departureDateTime)}</TableCell>
               <TableCell>
-                <Typography sx={{ fontWeight: 700 }}>{data.toLocation || '-'}</Typography>
-                <Typography variant="caption" sx={{ display: 'block' }}>
-                  {data.toTerminal || '-'}
-                </Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{formatTimeOnly(data.departureDateTime)}</Typography>
+                <Typography sx={{ fontWeight: 700 }}>{formatDateOnly(data.departureDateTime)}</Typography>
               </TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>{formatDateTime(data.arrivalDateTime)}</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </Box>
-
-      <Box sx={{ mt: 1.2, border: '1px solid #dbe3f2' }}>
-        <Typography
-          sx={{
-            px: 1.1,
-            py: 0.8,
-            borderBottom: '1px solid #dbe3f2',
-            bgcolor: '#f8fafc',
-            fontWeight: 700,
-          }}
-        >
-          Passenger Information
-        </Typography>
-        <Table size="small">
-          <TableBody>
-            <TableRow>
-              <TableCell sx={{ width: '34%', fontWeight: 700 }}>Passenger Name</TableCell>
-              <TableCell>{data.passengerName || '-'}</TableCell>
-              <TableCell sx={{ width: '20%', fontWeight: 700 }}>Baggage</TableCell>
-              <TableCell>{data.baggage || '-'}</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </Box>
-
-      <Box sx={{ mt: 1.2, border: '1px solid #dbe3f2' }}>
-        <Typography
-          sx={{
-            px: 1.1,
-            py: 0.8,
-            borderBottom: '1px solid #dbe3f2',
-            bgcolor: '#f8fafc',
-            fontWeight: 700,
-          }}
-        >
-          Fare Section
-        </Typography>
-        <Table size="small">
-          <TableHead>
-            <TableRow sx={{ bgcolor: '#f8fafc' }}>
-              <TableCell sx={{ fontWeight: 700 }}>Base Fare</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Tax</TableCell>
-              <TableCell sx={{ fontWeight: 700, textAlign: 'right' }}>Total Fare</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            <TableRow>
-              <TableCell>{formatMoney(data.baseFare)}</TableCell>
-              <TableCell>{formatMoney(data.tax)}</TableCell>
-              <TableCell sx={{ textAlign: 'right', fontWeight: 800, color: '#0f172a' }}>
-                {formatMoney(data.totalFare)}
+              <TableCell>
+                <Typography sx={{ fontWeight: 700, fontSize: 11 }}>{data.toLocation || '-'}</Typography>
+                <Typography sx={{ fontSize: 10 }}>{data.toTerminal || '-'}</Typography>
+              </TableCell>
+              <TableCell>
+                <Typography sx={{ fontWeight: 700, fontSize: 14 }}>{formatTimeOnly(data.arrivalDateTime)}</Typography>
+                <Typography sx={{ fontWeight: 700 }}>{formatDateOnly(data.arrivalDateTime)}</Typography>
               </TableCell>
             </TableRow>
           </TableBody>
         </Table>
-      </Box>
 
-      <Box sx={{ mt: 1.2, border: '1px solid #ecd9ab', bgcolor: '#fff8e6', p: 1 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: 12, mb: 0.5 }}>Important Notes</Typography>
-        <Typography sx={{ fontSize: 11, lineHeight: 1.5 }}>
-          This is a demo ticket for UI/print preview only. Visa and transit rules may apply based on route and
-          passport type. Refund and date-change policies are airline-dependent and may include penalties.
-        </Typography>
-      </Box>
+        <Box sx={{ p: 1, mt: 0.6 }}>
+          <Typography sx={{ fontWeight: 800, fontSize: 14, mb: 0.7 }}>Traveler(s) Information</Typography>
+          <Table size="small" sx={{ border: '1px solid #dbe3f2', '& .MuiTableCell-root': { fontSize: 10.5, py: 0.6 } }}>
+            <TableHead>
+              <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                <TableCell sx={{ fontWeight: 700 }}>Code</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Ticket No.</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              <TableRow>
+                <TableCell sx={{ width: '22%' }}>
+                  {barcodeDataUrl ? (
+                    <Box component="img" src={barcodeDataUrl} alt="Ticket Barcode" sx={{ width: '100%', maxWidth: 150, height: 36, objectFit: 'cover' }} />
+                  ) : (
+                    '-'
+                  )}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{data.passengerName || '-'}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{ticketNumber}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
 
-      <Divider sx={{ my: 1.2 }} />
-      <Typography sx={{ fontSize: 11, color: '#64748b' }}>
-        Generated by Demo Ticket Generator | Print-Ready A4 Layout
-      </Typography>
+          <Box sx={{ border: '1px solid #dbe3f2', borderTop: 0, p: 1 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: 11, mb: 0.5 }}>Baggage</Typography>
+            <Typography sx={{ fontSize: 10.5, fontWeight: 700 }}>{data.baggage || '-'}</Typography>
+            <Typography sx={{ fontSize: 10.3, whiteSpace: 'pre-line', mt: 0.5 }}>
+              {data.baggageNotes || '-'}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ px: 1, pb: 1 }}>
+          <Table size="small" sx={{ border: '1px solid #dbe3f2', '& .MuiTableCell-root': { fontSize: 10.5, py: 0.65 } }}>
+            <TableHead>
+              <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                <TableCell sx={{ fontWeight: 700 }}>Base Fare</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Taxes and Charges</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>SSR Amount</TableCell>
+                <TableCell sx={{ fontWeight: 700, textAlign: 'right' }}>Total</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              <TableRow>
+                <TableCell>{formatMoney(data.baseFare)}</TableCell>
+                <TableCell>{formatMoney(data.tax)}</TableCell>
+                <TableCell>{formatMoney(data.ssrAmount)}</TableCell>
+                <TableCell sx={{ textAlign: 'right' }}>{formatMoney(data.totalFare)}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+          <Typography sx={{ fontWeight: 800, textAlign: 'right', mt: 0.8, fontSize: 29 }}>
+            Total Net Fare : {formatMoney(data.totalFare)}
+          </Typography>
+        </Box>
+
+        <Box sx={{ px: 1, pb: 1 }}>
+          <Box sx={{ bgcolor: '#fff8e6', border: '1px solid #ecd9ab', p: 0.8, fontSize: 10.3, mb: 0.7 }}>
+            <Typography sx={{ fontSize: 10.3, fontWeight: 700 }}>
+              Important Note :
+            </Typography>
+            <Typography sx={{ fontSize: 10.3 }}>
+              Transit Visa is a mandatory requirement if there are via TWO Schengen countries or TWO stop in same countries.
+            </Typography>
+          </Box>
+          <Box sx={{ bgcolor: '#fff8e6', border: '1px solid #ecd9ab', p: 0.8, fontSize: 10.3 }}>
+            <Typography sx={{ fontSize: 10.3 }}>
+              Important Note : Refund/date change penalties upto 100% may apply. Refund/date change penalties upto
+              100% may apply. Refund/date change penalties upto 100% may apply.
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ px: 1, pb: 1 }}>
+          <Typography sx={{ fontSize: 10, color: '#64748b' }}>
+            Generated on: {formatDateTime(new Date().toISOString())}
+          </Typography>
+        </Box>
+      </Box>
     </Paper>
   );
 }

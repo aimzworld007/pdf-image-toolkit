@@ -16,7 +16,9 @@ import TicketForm from './TicketForm';
 import TicketPreview from './TicketPreview';
 import { DemoTicketData } from './ticketTypes';
 import {
-  calculateTotalFare,
+  calculateTotalFareWithSsr,
+  generateAlphaNumericCode,
+  generateBarcodeDataUrl,
   generateDemoReferenceNumber,
   generateDummyTicketNumber,
   getDefaultTicketData,
@@ -26,30 +28,41 @@ export default function TicketPage() {
   const [formData, setFormData] = useState<DemoTicketData>(getDefaultTicketData);
   const [referenceNumber, setReferenceNumber] = useState<string>(generateDemoReferenceNumber);
   const [ticketNumber, setTicketNumber] = useState<string>(generateDummyTicketNumber);
+  const [airlineRef, setAirlineRef] = useState<string>(() => generateAlphaNumericCode(5));
+  const [crsRef, setCrsRef] = useState<string>(() => generateAlphaNumericCode(5));
   const [isDownloading, setIsDownloading] = useState(false);
   const [pdfError, setPdfError] = useState<string>('');
 
   const previewRef = useRef<HTMLDivElement>(null);
+  const barcodeDataUrl = useMemo(() => generateBarcodeDataUrl(ticketNumber), [ticketNumber]);
 
   const canAutoCalculate = useMemo(
-    () => Boolean(formData.baseFare.trim() || formData.tax.trim()),
-    [formData.baseFare, formData.tax]
+    () => Boolean(formData.baseFare.trim() || formData.tax.trim() || formData.ssrAmount.trim()),
+    [formData.baseFare, formData.tax, formData.ssrAmount]
   );
 
   const handleFieldChange = (field: keyof DemoTicketData, value: string) => {
-    setFormData((current) => ({ ...current, [field]: value }));
+    setFormData((current) => {
+      const next = { ...current, [field]: value };
+      if (field === 'baseFare' || field === 'tax' || field === 'ssrAmount') {
+        next.totalFare = calculateTotalFareWithSsr(next.baseFare, next.tax, next.ssrAmount);
+      }
+      return next;
+    });
   };
 
   const handleAutoCalculateTotal = () => {
     setFormData((current) => ({
       ...current,
-      totalFare: calculateTotalFare(current.baseFare, current.tax),
+      totalFare: calculateTotalFareWithSsr(current.baseFare, current.tax, current.ssrAmount),
     }));
   };
 
   const handleRegenerateIds = () => {
     setReferenceNumber(generateDemoReferenceNumber());
     setTicketNumber(generateDummyTicketNumber());
+    setAirlineRef(generateAlphaNumericCode(5));
+    setCrsRef(generateAlphaNumericCode(5));
   };
 
   const handleReset = () => {
@@ -176,6 +189,9 @@ export default function TicketPage() {
             data={formData}
             referenceNumber={referenceNumber}
             ticketNumber={ticketNumber}
+            airlineRef={airlineRef}
+            crsRef={crsRef}
+            barcodeDataUrl={barcodeDataUrl}
             previewRef={previewRef}
           />
         </Grid>
