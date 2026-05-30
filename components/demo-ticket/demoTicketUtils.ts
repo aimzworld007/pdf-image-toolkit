@@ -104,6 +104,26 @@ export const UAE_ORIGIN_OPTIONS = [
   'Al Ain [AAN]',
 ];
 
+interface UaeAirlineOriginRule {
+  allowedOrigins: string[];
+  terminal: string;
+}
+
+const UAE_AIRLINE_ORIGIN_RULES: Record<string, UaeAirlineOriginRule> = {
+  flydubai: {
+    allowedOrigins: ['Dubai [DXB]'],
+    terminal: 'Terminal 2',
+  },
+  emirates: {
+    allowedOrigins: ['Dubai [DXB]'],
+    terminal: 'Terminal 3',
+  },
+  'air arabia': {
+    allowedOrigins: ['Sharjah [SHJ]', 'Abu Dhabi [AUH]'],
+    terminal: 'Terminal 1',
+  },
+};
+
 export const DESTINATION_OPTIONS = [
   'Dhaka [DAC] - Bangladesh',
   'Chattogram [CGP] - Bangladesh',
@@ -240,6 +260,31 @@ export function getRandomBaseFareByDestination(toLocation: string): string {
 
 function randomItem<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
+}
+
+export function getUaeOriginRuleByAirline(airlineName: string): UaeAirlineOriginRule | null {
+  const normalized = normalizeAirlineName(airlineName);
+  if (!normalized) return null;
+
+  const exact = UAE_AIRLINE_ORIGIN_RULES[normalized];
+  if (exact) return exact;
+
+  const partialKey = Object.keys(UAE_AIRLINE_ORIGIN_RULES).find(
+    (key) => normalized.includes(key) || key.includes(normalized)
+  );
+  return partialKey ? UAE_AIRLINE_ORIGIN_RULES[partialKey] : null;
+}
+
+export function getOriginAndTerminalByAirline(airlineName: string): { fromLocation: string; fromTerminal: string } {
+  const rule = getUaeOriginRuleByAirline(airlineName);
+  if (!rule) {
+    return { fromLocation: 'Dubai [DXB]', fromTerminal: 'Terminal 1' };
+  }
+
+  return {
+    fromLocation: randomItem(rule.allowedOrigins),
+    fromTerminal: rule.terminal,
+  };
 }
 
 export function getRandomAirlineByDestination(toLocation: string): string {

@@ -28,6 +28,7 @@ import {
   calculateTotalFareFromBaseFare,
   formatDateToDateTimeLocalInput,
   generateAutoBaggageContent,
+  getOriginAndTerminalByAirline,
   getCabinBaggageByAirlineAndClass,
   getRandomAirlineByDestination,
   getRandomAgencyProfile,
@@ -142,11 +143,14 @@ export default function TicketPage() {
       const nextAirline = airlineName || '';
       const nextClass = current.travelClass || 'Economy';
       const nextCabin = getCabinBaggageByAirlineAndClass(nextAirline, nextClass);
+      const originRule = getOriginAndTerminalByAirline(nextAirline);
       const auto = generateAutoBaggageContent(nextAirline, current.checkInBaggage, nextCabin);
       return {
         ...current,
         airline: nextAirline,
         flightNumber: generateFlightNumberFromAirline(nextAirline),
+        fromLocation: originRule.fromLocation,
+        fromTerminal: originRule.fromTerminal,
         cabinBaggage: nextCabin,
         baggage: isBaggageManualEdit ? current.baggage : auto.title,
         baggageNotes: isBaggageManualEdit ? current.baggageNotes : auto.notes,
@@ -233,6 +237,7 @@ export default function TicketPage() {
     const flightNumber = generateFlightNumberFromAirline(airline);
     const checkInBaggage = getRandomCheckInBaggage();
     const cabinBaggage = getCabinBaggageByAirlineAndClass(airline, travelClass);
+    const originRule = getOriginAndTerminalByAirline(airline);
     const baggageAuto = generateAutoBaggageContent(airline, checkInBaggage, cabinBaggage);
     const baseFare = getRandomBaseFareByDestination(toLocation);
     const tax = calculateTaxFromBaseFare(baseFare);
@@ -249,8 +254,8 @@ export default function TicketPage() {
       agencyLogoUrl: GENERATED_AGENCY_LOGO,
       passengerName,
       bookingDate,
-      fromLocation: 'Dubai [DXB]',
-      fromTerminal: 'Terminal 2',
+      fromLocation: originRule.fromLocation,
+      fromTerminal: originRule.fromTerminal,
       toLocation,
       toTerminal: 'Terminal 1',
       departureDateTime,
