@@ -5,6 +5,12 @@ const TAX_RATE = 0.2483333333;
 
 export const DEFAULT_AGENCY_LOGO = '/default-agency-logo.png';
 export const GENERATED_AGENCY_LOGO = '/generated-agency-logo.jpg';
+export const RANDOM_AGENCY_LOGOS = [
+  '/generated-agency-logo.jpg',
+  '/random-agency-logo-1.png',
+  '/random-agency-logo-2.png',
+  '/random-agency-logo-4.png',
+];
 
 export interface AgencyProfile {
   name: string;
@@ -260,6 +266,24 @@ export function getRandomBaseFareByDestination(toLocation: string): string {
 
 function randomItem<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
+}
+
+export function getRandomAgencyLogo(): string {
+  return randomItem(RANDOM_AGENCY_LOGOS);
+}
+
+function hashTextToIndex(text: string, modulo: number): number {
+  let hash = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+  }
+  return modulo > 0 ? hash % modulo : 0;
+}
+
+export function getAgencyLinkedRandomLogo(agencyName: string): string {
+  const normalized = agencyName.trim().toLowerCase();
+  if (!normalized) return RANDOM_AGENCY_LOGOS[0];
+  return RANDOM_AGENCY_LOGOS[hashTextToIndex(normalized, RANDOM_AGENCY_LOGOS.length)];
 }
 
 export function getUaeOriginRuleByAirline(airlineName: string): UaeAirlineOriginRule | null {

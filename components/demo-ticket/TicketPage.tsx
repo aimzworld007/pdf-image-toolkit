@@ -21,13 +21,13 @@ import { DemoTicketData } from './ticketTypes';
 import {
   AGENCY_PRESETS,
   DEFAULT_AGENCY_LOGO,
-  GENERATED_AGENCY_LOGO,
   DESTINATION_OPTIONS,
   applyAgencyProfileToTicket,
   calculateTaxFromBaseFare,
   calculateTotalFareFromBaseFare,
   formatDateToDateTimeLocalInput,
   generateAutoBaggageContent,
+  getAgencyLinkedRandomLogo,
   getOriginAndTerminalByAirline,
   getCabinBaggageByAirlineAndClass,
   getRandomAirlineByDestination,
@@ -196,8 +196,9 @@ export default function TicketPage() {
 
   const handleGenerateRandomAgency = () => {
     const randomAgency = getRandomAgencyProfile();
+    const linkedLogo = getAgencyLinkedRandomLogo(randomAgency.name);
     setAgencyMode('random');
-    setFormData((current) => applyAgencyProfileToTicket(current, randomAgency, GENERATED_AGENCY_LOGO));
+    setFormData((current) => applyAgencyProfileToTicket(current, randomAgency, linkedLogo));
   };
 
   const handleAutoCalculateTotal = () => {
@@ -243,6 +244,7 @@ export default function TicketPage() {
     const tax = calculateTaxFromBaseFare(baseFare);
     const totalFare = calculateTotalFareFromBaseFare(baseFare);
     const randomAgency = getRandomAgencyProfile();
+    const linkedLogo = getAgencyLinkedRandomLogo(randomAgency.name);
     const bookingDate = formatDateToDateTimeLocalInput(new Date());
 
     setFormData((current) => ({
@@ -251,7 +253,7 @@ export default function TicketPage() {
       agencyAddress: randomAgency.address,
       agencyEmail: randomAgency.email,
       agencyTel: randomAgency.tel,
-      agencyLogoUrl: GENERATED_AGENCY_LOGO,
+      agencyLogoUrl: linkedLogo,
       passengerName,
       bookingDate,
       fromLocation: originRule.fromLocation,
