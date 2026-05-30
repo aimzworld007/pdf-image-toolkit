@@ -323,8 +323,15 @@ export default function TicketPage() {
       const x = (pageWidth - imageWidth) / 2;
       const y = margin;
 
+      const sanitizedPassenger = (formData.passengerName || 'passenger')
+        .trim()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-zA-Z0-9_-]/g, '')
+        .replace(/_+/g, '_')
+        .replace(/^_+|_+$/g, '') || 'passenger';
+
       pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, imageWidth, imageHeight, undefined, 'FAST');
-      pdf.save(`${referenceNumber}-demo-ticket.pdf`);
+      pdf.save(`${sanitizedPassenger}-TkT.pdf`);
     } catch (error) {
       setPdfError('PDF download failed. You can still use Print and choose Save as PDF from your browser.');
       console.error(error);
