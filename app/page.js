@@ -65,6 +65,12 @@ const EXTERNAL_TOOLS = [
     url: 'https://ecashbiz.com/landing',
     desc: 'ERP toolkit for typing centers and travel operations.',
   },
+  {
+    icon: '📄',
+    title: 'AI CV MAKER',
+    url: 'https://buildcv.online',
+    desc: 'Create, save, edit, and share your CV online.',
+  },
 ];
 
 const MARQUEE_TOOLS = [...EXTERNAL_TOOLS, ...EXTERNAL_TOOLS];
