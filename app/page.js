@@ -26,6 +26,18 @@ const HOME_CATEGORIES = [
     title: 'Demo Ticket Generator',
     desc: 'Create, preview, print, and export professional itinerary-style demo tickets.',
   },
+  {
+    href: 'https://buildcv.online',
+    title: 'Build CV Online',
+    desc: 'Create a polished CV or resume online with simple editing and ready-to-use formatting.',
+    external: true,
+  },
+  {
+    href: 'https://icaophoto.vercel.app',
+    title: 'UAE Residency & Emirates ID Photo Check',
+    desc: 'Check and prepare UAE residency and Emirates ID photos for compliant submissions.',
+    external: true,
+  },
 ];
 
 const EXTERNAL_TOOLS = [
@@ -93,13 +105,28 @@ export default function Home() {
       <section className="home-section">
         <h2 className="section-title">Start Here</h2>
         <div className="tools-grid home-category-grid">
-          {HOME_CATEGORIES.map((item) => (
-            <Link key={item.href} href={item.href} className="tool-card home-category-card" style={{ textDecoration: 'none' }}>
-              <h3>{item.title}</h3>
-              <p>{item.desc}</p>
-              <span className="home-card-cta">Open Workspace</span>
-            </Link>
-          ))}
+          {HOME_CATEGORIES.map((item) =>
+            item.external ? (
+              <a
+                key={item.href}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="tool-card home-category-card"
+                style={{ textDecoration: 'none' }}
+              >
+                <h3>{item.title}</h3>
+                <p>{item.desc}</p>
+                <span className="home-card-cta">Open External Module</span>
+              </a>
+            ) : (
+              <Link key={item.href} href={item.href} className="tool-card home-category-card" style={{ textDecoration: 'none' }}>
+                <h3>{item.title}</h3>
+                <p>{item.desc}</p>
+                <span className="home-card-cta">Open Workspace</span>
+              </Link>
+            ),
+          )}
         </div>
       </section>
 
