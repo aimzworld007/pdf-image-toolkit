@@ -1,5 +1,13 @@
 import { DemoTicketData } from './ticketTypes';
 import JsBarcode from 'jsbarcode';
+import { AIRPORT_ROUTE_OPTIONS, getAirportRouteLabelByIata } from './airportOptions';
+
+export {
+  AIRPORT_ROUTE_OPTION_COUNT,
+  AIRPORT_ROUTE_OPTIONS,
+  UAE_ORIGIN_OPTIONS,
+  buildCustomAirportRouteLabel,
+} from './airportOptions';
 
 const TAX_RATE = 0.2483333333;
 
@@ -101,14 +109,8 @@ export const TRAVEL_CLASS_OPTIONS = ['Economy', 'Premium Economy', 'Business', '
 
 export const CHECKIN_BAGGAGE_OPTIONS = ['20 Kg', '25 Kg', '30 Kg', '35 Kg', '40 Kg', '46 Kg'];
 
-export const UAE_ORIGIN_OPTIONS = [
-  'Dubai [DXB]',
-  'Dubai Al Maktoum [DWC]',
-  'Abu Dhabi [AUH]',
-  'Sharjah [SHJ]',
-  'Ras Al Khaimah [RKT]',
-  'Al Ain [AAN]',
-];
+const DEFAULT_FROM_LOCATION = getAirportRouteLabelByIata('DXB') ?? 'Dubai [DXB]';
+const DEFAULT_TO_LOCATION = getAirportRouteLabelByIata('DAC') ?? 'Dhaka [DAC]';
 
 interface UaeAirlineOriginRule {
   allowedOrigins: string[];
@@ -117,39 +119,23 @@ interface UaeAirlineOriginRule {
 
 const UAE_AIRLINE_ORIGIN_RULES: Record<string, UaeAirlineOriginRule> = {
   flydubai: {
-    allowedOrigins: ['Dubai [DXB]'],
+    allowedOrigins: [getAirportRouteLabelByIata('DXB') ?? 'Dubai [DXB]'],
     terminal: 'Terminal 2',
   },
   emirates: {
-    allowedOrigins: ['Dubai [DXB]'],
+    allowedOrigins: [getAirportRouteLabelByIata('DXB') ?? 'Dubai [DXB]'],
     terminal: 'Terminal 3',
   },
   'air arabia': {
-    allowedOrigins: ['Sharjah [SHJ]', 'Abu Dhabi [AUH]'],
+    allowedOrigins: [
+      getAirportRouteLabelByIata('SHJ') ?? 'Sharjah [SHJ]',
+      getAirportRouteLabelByIata('AUH') ?? 'Abu Dhabi [AUH]',
+    ],
     terminal: 'Terminal 1',
   },
 };
 
-export const DESTINATION_OPTIONS = [
-  'Dhaka [DAC] - Bangladesh',
-  'Chattogram [CGP] - Bangladesh',
-  'Sylhet [ZYL] - Bangladesh',
-  'Delhi [DEL] - India',
-  'Mumbai [BOM] - India',
-  'Kolkata [CCU] - India',
-  'Kochi [COK] - India',
-  'Kozhikode [CCJ] - India',
-  'Hyderabad [HYD] - India',
-  'Karachi [KHI] - Pakistan',
-  'Lahore [LHE] - Pakistan',
-  'Islamabad [ISB] - Pakistan',
-  'Peshawar [PEW] - Pakistan',
-  'Sialkot [SKT] - Pakistan',
-  'Addis Ababa [ADD] - Ethiopia',
-  'Entebbe [EBB] - Uganda',
-  'Nairobi [NBO] - Kenya',
-  'Dar es Salaam [DAR] - Tanzania',
-];
+export const DESTINATION_OPTIONS = AIRPORT_ROUTE_OPTIONS;
 
 function pad(value: number): string {
   return String(value).padStart(2, '0');
@@ -302,7 +288,7 @@ export function getUaeOriginRuleByAirline(airlineName: string): UaeAirlineOrigin
 export function getOriginAndTerminalByAirline(airlineName: string): { fromLocation: string; fromTerminal: string } {
   const rule = getUaeOriginRuleByAirline(airlineName);
   if (!rule) {
-    return { fromLocation: 'Dubai [DXB]', fromTerminal: 'Terminal 1' };
+    return { fromLocation: DEFAULT_FROM_LOCATION, fromTerminal: 'Terminal 1' };
   }
 
   return {
@@ -441,9 +427,9 @@ export function generateAutoBaggageContent(airlineName: string, checkInBaggage: 
 export function getDefaultTicketData(): DemoTicketData {
   const now = new Date();
   const departureDateTime = generateRandomDepartureDateTimeForToday(now);
-  const arrivalDateTime = estimateArrivalDateTime(departureDateTime, 'Dhaka [DAC]');
+  const arrivalDateTime = estimateArrivalDateTime(departureDateTime, DEFAULT_TO_LOCATION);
 
-  const defaultBaseFare = getRandomBaseFareByDestination('Dhaka [DAC]');
+  const defaultBaseFare = getRandomBaseFareByDestination(DEFAULT_TO_LOCATION);
   const defaultTax = calculateTaxFromBaseFare(defaultBaseFare);
   const defaultTotal = calculateTotalFareFromBaseFare(defaultBaseFare);
 
@@ -459,9 +445,9 @@ export function getDefaultTicketData(): DemoTicketData {
     agencyLogoUrl: DEFAULT_AGENCY_LOGO,
     passengerName: 'Ainul islam',
     bookingDate: toDateTimeLocalValue(now),
-    fromLocation: 'Dubai [DXB]',
+    fromLocation: DEFAULT_FROM_LOCATION,
     fromTerminal: 'Terminal 2',
-    toLocation: 'Dhaka [DAC]',
+    toLocation: DEFAULT_TO_LOCATION,
     toTerminal: 'Terminal 1',
     departureDateTime,
     arrivalDateTime,

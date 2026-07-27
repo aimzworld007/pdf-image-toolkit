@@ -1,15 +1,15 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Container,
   GlobalStyles,
   Grid,
-  MenuItem,
   Paper,
   Stack,
   TextField,
@@ -92,8 +92,10 @@ const EXTERNAL_TOOLS = [
 ];
 
 const MARQUEE_TOOLS = [...EXTERNAL_TOOLS, ...EXTERNAL_TOOLS];
+const DEFAULT_MAGIC_DESTINATION = DESTINATION_OPTIONS.find((item) => item.includes('[DAC]')) ?? 'Dhaka [DAC] - Bangladesh';
 
 export default function TicketPage() {
+  const [hasMounted, setHasMounted] = useState(false);
   const [formData, setFormData] = useState<DemoTicketData>(getDefaultTicketData);
   const [referenceNumber, setReferenceNumber] = useState<string>(generateDemoReferenceNumber);
   const [ticketNumber, setTicketNumber] = useState<string>(generateDummyTicketNumber);
@@ -105,14 +107,33 @@ export default function TicketPage() {
   const [formMode, setFormMode] = useState<'default-editable' | 'magic-locked'>('default-editable');
   const [agencyMode, setAgencyMode] = useState<'default' | 'random'>('default');
   const [magicPassengerName, setMagicPassengerName] = useState('Ainul islam');
-  const [magicDestination, setMagicDestination] = useState('Dhaka [DAC] - Bangladesh');
+  const [magicDestination, setMagicDestination] = useState(DEFAULT_MAGIC_DESTINATION);
   const [magicDate, setMagicDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   const previewRef = useRef<HTMLDivElement>(null);
   const barcodeDataUrl = useMemo(() => generateBarcodeDataUrl(ticketNumber), [ticketNumber]);
 
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
   const canAutoCalculate = useMemo(() => Boolean(formData.baseFare.trim()), [formData.baseFare]);
 
+  if (!hasMounted) {
+    return (
+      <Container maxWidth="xl" sx={{ py: { xs: 2.2, md: 3.2 } }}>
+        <Paper
+          className="no-print"
+          elevation={0}
+          sx={{ p: 2, borderRadius: 2, border: '1px solid #dbe3f2', bgcolor: '#ffffff' }}
+        >
+          <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a' }}>
+            Demo Ticket Generator
+          </Typography>
+        </Paper>
+      </Container>
+    );
+  }
   const handleFieldChange = (field: keyof DemoTicketData, value: string) => {
     setFormData((current) => {
       const next = { ...current, [field]: value };
@@ -230,7 +251,7 @@ export default function TicketPage() {
 
   const handleGenerateMagicTicket = () => {
     const passengerName = magicPassengerName.trim() || 'Ainul islam';
-    const toLocation = magicDestination || 'Dhaka [DAC] - Bangladesh';
+    const toLocation = magicDestination || DEFAULT_MAGIC_DESTINATION;
     const departureDateTime = generateRandomDepartureDateTimeByDate(magicDate);
     const arrivalDateTime = estimateArrivalDateTime(departureDateTime, toLocation);
     const airline = getRandomAirlineByDestination(toLocation);
@@ -416,20 +437,16 @@ export default function TicketPage() {
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <TextField
-                fullWidth
-                size="small"
-                label="Destination"
-                select
+              <Autocomplete
+                freeSolo
+                options={DESTINATION_OPTIONS}
                 value={magicDestination}
-                onChange={(event) => setMagicDestination(event.target.value)}
-              >
-                {DESTINATION_OPTIONS.map((item) => (
-                  <MenuItem key={item} value={item}>
-                    {item}
-                  </MenuItem>
-                ))}
-              </TextField>
+                onChange={(_, value) => setMagicDestination(value || '')}
+                onInputChange={(_, value, reason) => {
+                  if (reason === 'input' || reason === 'clear') setMagicDestination(value);
+                }}
+                renderInput={(params) => <TextField {...params} size="small" label="Destination Airport" />}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField

@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import {
   Autocomplete,
   Box,
+  Button,
   FormControlLabel,
   Grid,
   MenuItem,
@@ -16,12 +18,13 @@ import {
 } from '@mui/material';
 import { DemoTicketData, TicketStatus } from './ticketTypes';
 import {
+  AIRPORT_ROUTE_OPTION_COUNT,
+  AIRPORT_ROUTE_OPTIONS,
   AIRLINE_OPTIONS,
   AGENCY_PRESETS,
+  buildCustomAirportRouteLabel,
   CHECKIN_BAGGAGE_OPTIONS,
-  DESTINATION_OPTIONS,
   TRAVEL_CLASS_OPTIONS,
-  UAE_ORIGIN_OPTIONS,
 } from './demoTicketUtils';
 
 interface TicketFormProps {
@@ -44,6 +47,59 @@ const STATUS_OPTIONS: TicketStatus[] = ['CONFIRMED', 'PENDING', 'ON HOLD', 'CANC
 const AIRLINE_NAME_OPTIONS = AIRLINE_OPTIONS.map((item) => item.name);
 const CUSTOM_PRESET_VALUE = '__CUSTOM__';
 
+interface CustomAirportEditorProps {
+  label: 'From' | 'To';
+  airportName: string;
+  iataCode: string;
+  onAirportNameChange: (value: string) => void;
+  onIataCodeChange: (value: string) => void;
+  onApply: () => void;
+}
+
+function CustomAirportEditor({
+  label,
+  airportName,
+  iataCode,
+  onAirportNameChange,
+  onIataCodeChange,
+  onApply,
+}: CustomAirportEditorProps) {
+  const canApply = airportName.trim().length > 0 && iataCode.trim().length === 3;
+
+  return (
+    <>
+      <Grid size={{ xs: 12, sm: 5 }}>
+        <TextField
+          fullWidth
+          size="small"
+          label={`Custom ${label} Airport Name`}
+          value={airportName}
+          onChange={(event) => onAirportNameChange(event.target.value)}
+        />
+      </Grid>
+      <Grid size={{ xs: 7, sm: 4 }}>
+        <TextField
+          fullWidth
+          size="small"
+          label={`Custom ${label} IATA Code`}
+          value={iataCode}
+          onChange={(event) => onIataCodeChange(event.target.value)}
+          slotProps={{
+            htmlInput: {
+              maxLength: 3,
+              style: { textTransform: 'uppercase' },
+            },
+          }}
+        />
+      </Grid>
+      <Grid size={{ xs: 5, sm: 3 }}>
+        <Button fullWidth variant="outlined" onClick={onApply} disabled={!canApply} sx={{ minHeight: 40 }}>
+          Use {label}
+        </Button>
+      </Grid>
+    </>
+  );
+}
 export default function TicketForm({
   data,
   onFieldChange,
@@ -59,6 +115,18 @@ export default function TicketForm({
   onToggleBaggageManualEdit,
   isReadOnly,
 }: TicketFormProps) {
+  const [customFromAirportName, setCustomFromAirportName] = useState('');
+  const [customFromIataCode, setCustomFromIataCode] = useState('');
+  const [customToAirportName, setCustomToAirportName] = useState('');
+  const [customToIataCode, setCustomToIataCode] = useState('');
+
+  const normalizeCustomIataCode = (value: string) => value.replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 3);
+
+  const applyCustomAirport = (field: 'fromLocation' | 'toLocation', airportName: string, iataCode: string) => {
+    const routeLabel = buildCustomAirportRouteLabel(airportName, iataCode);
+    if (!routeLabel) return;
+    onFieldChange(field, routeLabel);
+  };
   return (
     <Paper elevation={0} sx={{ p: 2.2, borderRadius: 2, border: '1px solid #dbe3f2', bgcolor: '#ffffff' }}>
       <Stack spacing={2}>
@@ -250,13 +318,15 @@ export default function TicketForm({
             <Grid size={{ xs: 12, sm: 6 }}>
               <Autocomplete
                 freeSolo
-                options={UAE_ORIGIN_OPTIONS}
+                options={AIRPORT_ROUTE_OPTIONS}
                 value={data.fromLocation}
                 onChange={(_, value) => onFieldChange('fromLocation', value || '')}
                 onInputChange={(_, value, reason) => {
                   if (reason === 'input' || reason === 'clear') onFieldChange('fromLocation', value);
                 }}
-                renderInput={(params) => <TextField {...params} size="small" label="From (UAE Origin)" />}
+                renderInput={(params) => (
+                  <TextField {...params} size="small" label={`From Airport (${AIRPORT_ROUTE_OPTION_COUNT}+)`} />
+                )}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -271,13 +341,15 @@ export default function TicketForm({
             <Grid size={{ xs: 12, sm: 6 }}>
               <Autocomplete
                 freeSolo
-                options={DESTINATION_OPTIONS}
+                options={AIRPORT_ROUTE_OPTIONS}
                 value={data.toLocation}
                 onChange={(_, value) => onFieldChange('toLocation', value || '')}
                 onInputChange={(_, value, reason) => {
                   if (reason === 'clear') onFieldChange('toLocation', value);
                 }}
-                renderInput={(params) => <TextField {...params} size="small" label="To Destination" />}
+                renderInput={(params) => (
+                  <TextField {...params} size="small" label={`To Airport (${AIRPORT_ROUTE_OPTION_COUNT}+)`} />
+                )}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -289,6 +361,22 @@ export default function TicketForm({
                 onChange={(event) => onFieldChange('toTerminal', event.target.value)}
               />
             </Grid>
+            <CustomAirportEditor
+              label="From"
+              airportName={customFromAirportName}
+              iataCode={customFromIataCode}
+              onAirportNameChange={setCustomFromAirportName}
+              onIataCodeChange={(value) => setCustomFromIataCode(normalizeCustomIataCode(value))}
+              onApply={() => applyCustomAirport('fromLocation', customFromAirportName, customFromIataCode)}
+            />
+            <CustomAirportEditor
+              label="To"
+              airportName={customToAirportName}
+              iataCode={customToIataCode}
+              onAirportNameChange={setCustomToAirportName}
+              onIataCodeChange={(value) => setCustomToIataCode(normalizeCustomIataCode(value))}
+              onApply={() => applyCustomAirport('toLocation', customToAirportName, customToIataCode)}
+            />
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
