@@ -259,7 +259,7 @@ export default function TicketForm({
             Passenger and Booking
           </Typography>
           <Grid container spacing={1.4}>
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -268,7 +268,16 @@ export default function TicketForm({
                 onChange={(event) => onFieldChange('passengerName', event.target.value)}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Passport Number"
+                value={data.passportNumber}
+                onChange={(event) => onFieldChange('passportNumber', event.target.value.toUpperCase())}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 size="small"
