@@ -5,6 +5,18 @@ import { RefObject } from 'react';
 import { DemoTicketData } from './ticketTypes';
 import { calculateDuration, formatDateOnly, formatMoney, formatTimeOnly } from './demoTicketUtils';
 
+function formatTicketAirportLabel(route: string): string {
+  const value = route.trim();
+  if (!value) return '-';
+
+  const iataMatch = value.match(/\[([A-Z]{3})\]/);
+  const city = value.includes(' - ') ? value.split(' - ')[0]?.trim() : '';
+
+  if (city && iataMatch) return `${city} [${iataMatch[1]}]`;
+  if (iataMatch) return `[${iataMatch[1]}]`;
+  return city || value;
+}
+
 interface TicketPreviewProps {
   data: DemoTicketData;
   referenceNumber: string;
@@ -30,6 +42,9 @@ export default function TicketPreview({
   barcodeDataUrl,
   previewRef,
 }: TicketPreviewProps) {
+  const fromAirportLabel = formatTicketAirportLabel(data.fromLocation);
+  const toAirportLabel = formatTicketAirportLabel(data.toLocation);
+
   return (
     <Paper
       ref={previewRef}
@@ -124,7 +139,7 @@ export default function TicketPreview({
 
         <Box sx={{ p: 0.8, borderTop: '1px solid #dbe3f2', bgcolor: '#f8fafc' }}>
           <Typography sx={{ fontWeight: 800, fontSize: 14 }}>
-            ONWARD &nbsp; {data.fromLocation || '-'} &nbsp; {'>'} &nbsp; {data.toLocation || '-'}
+            ONWARD &nbsp; {fromAirportLabel} &nbsp; {'>'} &nbsp; {toAirportLabel}
           </Typography>
           <Typography sx={{ fontSize: 11 }}>
             {formatDateOnly(data.departureDateTime)} | {data.stops || '-'} | {calculateDuration(data.departureDateTime, data.arrivalDateTime)}
@@ -161,7 +176,7 @@ export default function TicketPreview({
                 <Typography sx={{ fontSize: 10 }}>Operated by {data.airline || '-'}</Typography>
               </TableCell>
               <TableCell>
-                <Typography sx={{ fontWeight: 700, fontSize: 11 }}>{data.fromLocation || '-'}</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 11 }}>{fromAirportLabel}</Typography>
                 <Typography sx={{ fontSize: 10 }}>{data.fromTerminal || '-'}</Typography>
               </TableCell>
               <TableCell>
@@ -169,7 +184,7 @@ export default function TicketPreview({
                 <Typography sx={{ fontWeight: 700 }}>{formatDateOnly(data.departureDateTime)}</Typography>
               </TableCell>
               <TableCell>
-                <Typography sx={{ fontWeight: 700, fontSize: 11 }}>{data.toLocation || '-'}</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 11 }}>{toAirportLabel}</Typography>
                 <Typography sx={{ fontSize: 10 }}>{data.toTerminal || '-'}</Typography>
               </TableCell>
               <TableCell>
@@ -187,6 +202,7 @@ export default function TicketPreview({
               <TableRow sx={{ bgcolor: '#f8fafc' }}>
                 <TableCell sx={{ fontWeight: 700 }}>Code</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Passport No.</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Ticket No.</TableCell>
               </TableRow>
             </TableHead>
@@ -200,6 +216,7 @@ export default function TicketPreview({
                   )}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>{data.passengerName || '-'}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{data.passportNumber || '-'}</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>{ticketNumber}</TableCell>
               </TableRow>
             </TableBody>

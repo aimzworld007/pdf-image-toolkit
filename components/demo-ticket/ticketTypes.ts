@@ -7,6 +7,7 @@ export interface DemoTicketData {
   agencyEmail: string;
   agencyLogoUrl: string;
   passengerName: string;
+  passportNumber: string;
   bookingDate: string;
   fromLocation: string;
   fromTerminal: string;

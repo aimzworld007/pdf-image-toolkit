@@ -444,6 +444,7 @@ export function getDefaultTicketData(): DemoTicketData {
     agencyEmail: defaultAgency.email,
     agencyLogoUrl: DEFAULT_AGENCY_LOGO,
     passengerName: 'Ainul islam',
+    passportNumber: 'A12345678',
     bookingDate: toDateTimeLocalValue(now),
     fromLocation: DEFAULT_FROM_LOCATION,
     fromTerminal: 'Terminal 2',
