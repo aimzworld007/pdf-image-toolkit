@@ -22,11 +22,6 @@ const HOME_CATEGORIES = [
     desc: 'Auto-grid photo print sheets for direct printer output.',
   },
   {
-    href: '/demo-ticket-generator',
-    title: 'Demo Ticket Generator',
-    desc: 'Create, preview, print, and export professional itinerary-style demo tickets.',
-  },
-  {
     href: 'https://buildcv.online',
     title: 'Build CV Online',
     desc: 'Create a polished CV or resume online with simple editing and ready-to-use formatting.',
