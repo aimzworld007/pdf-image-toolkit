@@ -19,7 +19,7 @@ export const TOOL_SECTIONS = [
     category: 'pdf',
     title: 'PDF Tools',
     items: [
-      { id: 'pdf-workbench', label: 'PDF Workbench', desc: 'Tabbed PDF studio like online converter layout.' },
+      { id: 'pdf-workbench', label: 'PDF Workbench', desc: 'Convert any image to PDF or merge multiple images/PDFs.' },
       { id: 'pdf-to-jpg', label: 'PDF to JPG', desc: 'Extract all PDF pages to JPG images.' },
       { id: 'combine-pdfs', label: 'Combine PDFs & Images', desc: 'Reorder and merge PDFs/images into one PDF.' },
       { id: 'pdf-page-studio', label: 'PDF Page Studio', desc: 'Remove/rearrange pages, add blank/image pages, and export.' },

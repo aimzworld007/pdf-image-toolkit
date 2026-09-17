@@ -37,7 +37,7 @@ import {
 } from '../../../lib/file-helpers';
 
 export default function PdfWorkbenchTool({ onBack }) {
-  const [tab, setTab] = useState('combine');
+  const [tab, setTab] = useState('images');
   const [files, setFiles] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [dragOver, setDragOver] = useState(false);
@@ -47,11 +47,12 @@ export default function PdfWorkbenchTool({ onBack }) {
   const inputId = useId();
 
   const tabs = [
-    { id: 'combine', label: 'Combine PDF', accept: 'application/pdf' },
-    { id: 'jpg', label: 'JPG → PDF', accept: 'image/jpeg,image/jpg' },
-    { id: 'png', label: 'PNG → PDF', accept: 'image/png' },
-    { id: 'tiff', label: 'TIFF → PDF', accept: 'image/tiff,.tiff,.tif' },
-    { id: 'svg', label: 'SVG → PDF', accept: 'image/svg+xml,.svg' },
+    {
+      id: 'images',
+      label: 'Image → PDF',
+      accept: 'image/*,.avif,.bmp,.gif,.heic,.heif,.jpeg,.jpg,.png,.svg,.tif,.tiff,.webp',
+    },
+    { id: 'combine', label: 'Combine PDFs', accept: 'application/pdf' },
   ];
 
   const currentTab = tabs.find((t) => t.id === tab) || tabs[0];
@@ -99,7 +100,10 @@ export default function PdfWorkbenchTool({ onBack }) {
     }));
 
     setFiles((prev) => [...prev, ...enriched]);
-    setStatus(`${enriched.length} file(s) added.`);
+    const total = files.length + enriched.length;
+    setStatus(tab === 'images' && total > 1
+      ? `${total} images selected. They will be merged into one multi-page PDF.`
+      : `${enriched.length} file(s) added.`);
     setTone('success');
   };
 
@@ -145,11 +149,14 @@ export default function PdfWorkbenchTool({ onBack }) {
           page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
         }
         const bytes = await pdfDoc.save({ useObjectStreams: true, addDefaultPage: false });
-        downloadBlob(new Blob([bytes], { type: 'application/pdf' }), outputFilename(files[0].file.name, 'converted', 'pdf'));
+        const suffix = files.length > 1 ? 'merged' : 'converted';
+        downloadBlob(new Blob([bytes], { type: 'application/pdf' }), outputFilename(files[0].file.name, suffix, 'pdf'));
       }
 
       setTone('success');
-      setStatus('PDF is ready and downloaded.');
+      setStatus(tab === 'images' && files.length > 1
+        ? `${files.length} images merged into one PDF and downloaded.`
+        : 'PDF is ready and downloaded.');
     } catch {
       setTone('error');
       setStatus('Conversion failed. TIFF/SVG support may depend on browser decoding support.');
@@ -162,7 +169,10 @@ export default function PdfWorkbenchTool({ onBack }) {
 
   return (
     <ToolFrame title="PDF Workbench" onBack={onBack}>
-      <SectionHeader title="Tabbed PDF Studio" subtitle="Upload, preview, clear and combine with a converter-style workflow." />
+      <SectionHeader
+        title="PDF Workbench"
+        subtitle="Convert any supported image to PDF, or upload multiple images to merge them into one PDF."
+      />
 
       <div className="pdf-workbench-tabs">
         {tabs.map((t) => (
@@ -236,7 +246,7 @@ export default function PdfWorkbenchTool({ onBack }) {
             ) : (
               <div className="pdf-workbench-placeholder">
                 <p>Drop Your Files Here</p>
-                <small>Accepted: {currentTab.accept}</small>
+                <small>{tab === 'images' ? 'Accepted: all supported image formats' : 'Accepted: PDF files'}</small>
               </div>
             )}
           </div>
@@ -252,9 +262,19 @@ export default function PdfWorkbenchTool({ onBack }) {
 
         <div className="pdf-workbench-footer">
           <button className="btn" onClick={runCombine} disabled={busy || !files.length}>
-            {busy ? 'PROCESSING...' : (tab === 'combine' ? 'COMBINE' : 'CONVERT')}
+            {busy
+              ? 'PROCESSING...'
+              : tab === 'combine'
+                ? 'COMBINE PDFs'
+                : files.length > 1
+                  ? `MERGE ${files.length} IMAGES TO PDF`
+                  : 'CONVERT IMAGE TO PDF'}
           </button>
-          {files.length ? <span className="kpi">{files.length} file(s)</span> : null}
+          {files.length ? (
+            <span className="kpi">
+              {files.length} {tab === 'images' ? 'image(s)' : 'PDF(s)'}
+            </span>
+          ) : null}
         </div>
       </div>
 
