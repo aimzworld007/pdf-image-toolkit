@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -177,7 +177,7 @@ export default function PdfPageStudioTool({ onBack }) {
       }
 
       const bytes = await finalPdf.save({ useObjectStreams: true, addDefaultPage: false });
-      downloadBlob(new Blob([bytes], { type: 'application/pdf' }), randomFilename('edited_pdf', 'pdf'));
+      downloadBlob(new Blob([bytes], { type: 'application/pdf' }), outputFilename(file.name, 'edited', 'pdf'));
       setTone('success');
       setStatus('Edited PDF exported.');
     } catch {

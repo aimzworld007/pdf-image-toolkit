@@ -29,7 +29,6 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -60,7 +59,7 @@ export default function QrCodeGeneratorTool({ onBack }) {
 
   const downloadPng = () => {
     if (!preview) return;
-    downloadDataUrl(preview, randomFilename('qr_code', 'png'));
+    downloadDataUrl(preview, 'qr_code.png');
     setTone('success');
     setStatus('PNG QR code downloaded.');
   };
@@ -76,7 +75,7 @@ export default function QrCodeGeneratorTool({ onBack }) {
       const y = (page.getHeight() - sizePt) / 2;
       page.drawImage(qr, { x, y, width: sizePt, height: sizePt });
       const bytes = await pdf.save({ useObjectStreams: true });
-      downloadBlob(new Blob([bytes], { type: 'application/pdf' }), randomFilename('qr_code', 'pdf'));
+      downloadBlob(new Blob([bytes], { type: 'application/pdf' }), 'qr_code.pdf');
       setTone('success');
       setStatus('PDF QR code downloaded.');
     } catch {

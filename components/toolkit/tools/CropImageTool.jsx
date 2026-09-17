@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -99,7 +99,7 @@ export default function CropImageTool({ onBack }) {
       {preview ? (
         <div style={{ marginTop: 12 }}>
           <img src={preview} alt="Cropped result" className="thumb" style={{ width: '100%', maxWidth: 320, height: 'auto' }} />
-          <div style={{ marginTop: 8 }}><button className="btn alt" onClick={() => downloadDataUrl(preview, randomFilename('cropped', 'png'))}>Download</button></div>
+          <div style={{ marginTop: 8 }}><button className="btn alt" onClick={() => downloadDataUrl(preview, outputFilename(file?.name, 'cropped', 'png'))}>Download</button></div>
         </div>
       ) : null}
 

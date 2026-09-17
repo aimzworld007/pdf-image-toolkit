@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -88,7 +88,7 @@ export default function CompressJpgTool({ onBack }) {
           <div>
             <ImagePreview title="Compressed" src={preview} />
             {preview ? (
-              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(preview, randomFilename('compressed', 'jpg'))}>Download JPG</button>
+              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(preview, outputFilename(file?.name, 'compressed', 'jpg'))}>Download JPG</button>
             ) : null}
           </div>
         </div>

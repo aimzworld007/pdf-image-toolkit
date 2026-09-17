@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -187,7 +187,7 @@ function EidPhotoEditor({ side, data, setData, targetWidthIn, targetHeightIn, ra
         <div style={{ marginTop: 10 }}>
           <img src={data.processed} alt={`${side} processed`} className="thumb" style={{ width: '100%', height: 160, objectFit: 'contain', background: '#f8fafc' }} />
           <div style={{ marginTop: 8 }}>
-            <button className="btn alt" onClick={() => downloadDataUrl(data.processed, randomFilename(side.toLowerCase().replace(' ', '_'), 'png'))}>Download PNG</button>
+            <button className="btn alt" onClick={() => downloadDataUrl(data.processed, outputFilename(data.file?.name, side.toLowerCase().replace(' ', '_'), 'png'))}>Download PNG</button>
           </div>
         </div>
       ) : null}
@@ -244,7 +244,7 @@ export default function EidLaminationTool({ onBack }) {
       page.drawRectangle({ x: startX, y: startY + imageH + gap, width: imageW, height: imageH, borderWidth: 0.8, borderColor: rgb(0, 0, 0) });
       page.drawRectangle({ x: startX, y: startY, width: imageW, height: imageH, borderWidth: 0.8, borderColor: rgb(0, 0, 0) });
 
-      downloadBlob(new Blob([await pdf.save()], { type: 'application/pdf' }), 'EID-Lamination-Printout-A4.pdf');
+      downloadBlob(new Blob([await pdf.save()], { type: 'application/pdf' }), outputFilename(front.file?.name, 'lamination_printout', 'pdf'));
       setTone('success');
       setStatus('A4 lamination PDF generated and downloaded.');
     } catch {

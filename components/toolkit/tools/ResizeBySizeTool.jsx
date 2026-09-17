@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -133,7 +133,7 @@ export default function ResizeBySizeTool({ onBack }) {
           <div>
             <ImagePreview title="Resized To Target Size" src={result} />
             {result ? (
-              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(result, randomFilename('resized_target', 'jpg'))}>Download Result</button>
+              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(result, outputFilename(file?.name, 'resized', 'jpg'))}>Download Result</button>
             ) : null}
           </div>
         </div>

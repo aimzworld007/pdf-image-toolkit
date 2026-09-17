@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -89,7 +89,7 @@ export default function PdfToJpgTool({ onBack }) {
         canvas.height = viewport.height;
         await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
         output.push({
-          name: randomFilename(`page_${pageNumber}`, 'jpg'),
+          name: outputFilename(file.name, `page_${pageNumber}`, 'jpg'),
           dataUrl: canvas.toDataURL('image/jpeg', 0.92),
         });
       }

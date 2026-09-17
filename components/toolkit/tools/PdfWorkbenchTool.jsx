@@ -30,7 +30,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -136,7 +136,7 @@ export default function PdfWorkbenchTool({ onBack }) {
           copied.forEach((page) => finalPdf.addPage(page));
         }
         const bytes = await finalPdf.save({ useObjectStreams: true, addDefaultPage: false });
-        downloadBlob(new Blob([bytes], { type: 'application/pdf' }), randomFilename('combined_pdf', 'pdf'));
+        downloadBlob(new Blob([bytes], { type: 'application/pdf' }), outputFilename(files[0].file.name, 'combined', 'pdf'));
       } else {
         const pdfDoc = await PDFDocument.create();
         for (const entry of files) {
@@ -145,7 +145,7 @@ export default function PdfWorkbenchTool({ onBack }) {
           page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
         }
         const bytes = await pdfDoc.save({ useObjectStreams: true, addDefaultPage: false });
-        downloadBlob(new Blob([bytes], { type: 'application/pdf' }), randomFilename(`${tab}_to_pdf`, 'pdf'));
+        downloadBlob(new Blob([bytes], { type: 'application/pdf' }), outputFilename(files[0].file.name, 'converted', 'pdf'));
       }
 
       setTone('success');

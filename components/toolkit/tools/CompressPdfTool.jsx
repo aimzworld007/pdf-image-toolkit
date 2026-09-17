@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -76,7 +76,7 @@ export default function CompressPdfTool({ onBack }) {
         updateFieldAppearances: false,
       });
 
-      downloadBlob(new Blob([optimizedBytes], { type: 'application/pdf' }), randomFilename('compressed_pdf', 'pdf'));
+      downloadBlob(new Blob([optimizedBytes], { type: 'application/pdf' }), outputFilename(file.name, 'compressed', 'pdf'));
       const oldKb = (originalBytes.byteLength / 1024).toFixed(1);
       const newKb = (optimizedBytes.byteLength / 1024).toFixed(1);
       setTone('success');

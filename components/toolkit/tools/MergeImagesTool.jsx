@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -110,13 +110,13 @@ export default function MergeImagesTool({ onBack }) {
           {vertical ? (
             <div>
               <img src={vertical} className="thumb" style={{ width: '100%', height: 'auto' }} alt="Vertical merge" />
-              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(vertical, randomFilename('merged_vertical', 'png'))}>Download Vertical</button>
+              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(vertical, outputFilename(fileA?.name, 'merged_vertical', 'png'))}>Download Vertical</button>
             </div>
           ) : null}
           {horizontal ? (
             <div>
               <img src={horizontal} className="thumb" style={{ width: '100%', height: 'auto' }} alt="Horizontal merge" />
-              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(horizontal, randomFilename('merged_horizontal', 'png'))}>Download Horizontal</button>
+              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(horizontal, outputFilename(fileA?.name, 'merged_horizontal', 'png'))}>Download Horizontal</button>
             </div>
           ) : null}
         </div>

@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -65,7 +65,7 @@ export default function JpgToPdfTool({ onBack }) {
       const page = pdfDoc.addPage([jpgImage.width, jpgImage.height]);
       page.drawImage(jpgImage, { x: 0, y: 0, width: jpgImage.width, height: jpgImage.height });
       const bytes = await pdfDoc.save();
-      downloadBlob(new Blob([bytes], { type: 'application/pdf' }), randomFilename('converted', 'pdf'));
+      downloadBlob(new Blob([bytes], { type: 'application/pdf' }), outputFilename(file.name, 'converted', 'pdf'));
       setTone('success');
       setStatus('PDF generated and downloaded.');
     } catch {

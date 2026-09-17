@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -83,7 +83,7 @@ export default function ExtractPdfImagesTool({ onBack }) {
 
       setStatus('Building ZIP...');
       const zip = await createZipBlob(entries);
-      downloadBlob(zip, randomFilename('pdf_images', 'zip'));
+      downloadBlob(zip, outputFilename(file.name, 'images', 'zip'));
       setTone('success');
       setStatus(`${entries.length} image(s) extracted and downloaded as ZIP.`);
     } catch {

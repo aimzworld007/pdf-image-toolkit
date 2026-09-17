@@ -29,7 +29,6 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -126,7 +125,7 @@ export default function SignatureGeneratorTool({ onBack }) {
       dataUrl = canvas.toDataURL('image/png');
     }
 
-    downloadDataUrl(dataUrl, randomFilename('signature', format));
+    downloadDataUrl(dataUrl, `signature.${format}`);
     setTone('success');
     setStatus(`Signature downloaded as ${format.toUpperCase()}.`);
   };

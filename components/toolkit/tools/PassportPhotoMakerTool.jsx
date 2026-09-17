@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -161,7 +161,7 @@ export default function PassportPhotoMakerTool({ onBack }) {
   const downloadPhoto = async () => {
     try {
       const canvas = await buildPhotoCanvas();
-      downloadDataUrl(canvas.toDataURL('image/png'), randomFilename('passport_photo', 'png'));
+      downloadDataUrl(canvas.toDataURL('image/png'), outputFilename(file.name, 'passport_photo', 'png'));
       setTone('success');
       setStatus('Passport photo PNG downloaded.');
     } catch (error) {
@@ -201,7 +201,7 @@ export default function PassportPhotoMakerTool({ onBack }) {
       }
 
       const bytes = await pdf.save({ useObjectStreams: true, addDefaultPage: false });
-      downloadBlob(new Blob([bytes], { type: 'application/pdf' }), randomFilename('passport_photo_sheet', 'pdf'));
+      downloadBlob(new Blob([bytes], { type: 'application/pdf' }), outputFilename(file.name, 'passport_photo_sheet', 'pdf'));
       setTone('success');
       setStatus(`Print sheet PDF downloaded with ${quantity} photo(s).`);
     } catch (error) {

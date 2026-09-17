@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -148,7 +148,7 @@ export default function BackgroundRemoverTool({ onBack }) {
       <div className="row">
         <FileInput accept="image/*" onSelect={onSelectFile} label={file ? file.name : 'Select Image'} />
         <button className="btn" onClick={removeBackground} disabled={busy}>{busy ? 'Processing...' : 'Remove Background'}</button>
-        {result ? <button className="btn alt" onClick={() => downloadDataUrl(result, randomFilename('background_removed', 'png'))}>Download PNG</button> : null}
+        {result ? <button className="btn alt" onClick={() => downloadDataUrl(result, outputFilename(file?.name, 'background_removed', 'png'))}>Download PNG</button> : null}
       </div>
 
       <div className="row" style={{ marginTop: 12 }}>

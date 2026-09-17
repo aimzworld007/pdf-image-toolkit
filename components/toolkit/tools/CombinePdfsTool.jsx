@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -100,7 +100,7 @@ export default function CombinePdfsTool({ onBack }) {
       }
 
       const bytes = await finalPdf.save();
-      downloadBlob(new Blob([bytes], { type: 'application/pdf' }), randomFilename('combined_document', 'pdf'));
+      downloadBlob(new Blob([bytes], { type: 'application/pdf' }), outputFilename(items[0].file.name, 'combined', 'pdf'));
       setTone('success');
       setStatus('Combined PDF downloaded.');
     } catch {

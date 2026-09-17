@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -191,7 +191,7 @@ export default function PrintPhotoPdfTool({ onBack }) {
     try {
       setBusy(true);
       const blob = await buildPdfBlob();
-      downloadBlob(blob, randomFilename('print_photo_sheet', 'pdf'));
+      downloadBlob(blob, outputFilename(file.name, 'print_sheet', 'pdf'));
       setTone('success');
       setStatus(`PDF ready. ${layout.perPage} photos/page, ${layout.pages} page(s).`);
     } catch {

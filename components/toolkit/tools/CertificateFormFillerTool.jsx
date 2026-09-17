@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -164,7 +164,7 @@ export default function CertificateFormFillerTool({ onBack }) {
       });
 
       const bytes = await pdfDoc.save({ useObjectStreams: true });
-      downloadBlob(new Blob([bytes], { type: 'application/pdf' }), randomFilename('filled_form', 'pdf'));
+      downloadBlob(new Blob([bytes], { type: 'application/pdf' }), outputFilename(file.name, 'filled', 'pdf'));
       setTone('success');
       setStatus('Filled PDF downloaded.');
     } catch {

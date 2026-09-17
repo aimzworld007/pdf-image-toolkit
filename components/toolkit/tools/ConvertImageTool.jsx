@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -95,7 +95,7 @@ export default function ConvertImageTool({ onBack }) {
           <div>
             <ImagePreview title="Converted" src={result} />
             {result ? (
-              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(result, randomFilename('converted', format === 'jpeg' ? 'jpg' : 'png'))}>Download</button>
+              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(result, outputFilename(file?.name, 'image', format === 'jpeg' ? 'jpg' : 'png'))}>Download</button>
             ) : null}
           </div>
         </div>

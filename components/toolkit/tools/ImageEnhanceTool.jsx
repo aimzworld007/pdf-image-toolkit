@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -115,7 +115,7 @@ export default function ImageEnhanceTool({ onBack }) {
             <div>
               <p className="label">Enhanced</p>
               <img src={result} alt="Enhanced" className="thumb" style={{ width: '100%', height: 'auto' }} />
-              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(result, randomFilename('enhanced', 'jpg'))}>Download Enhanced</button>
+              <button className="btn alt" style={{ marginTop: 8 }} onClick={() => downloadDataUrl(result, outputFilename(file?.name, 'enhanced', 'jpg'))}>Download Enhanced</button>
             </div>
           ) : null}
         </div>

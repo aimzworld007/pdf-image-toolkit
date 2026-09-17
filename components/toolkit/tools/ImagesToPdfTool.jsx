@@ -29,7 +29,7 @@ import {
   downloadDataUrl,
   loadImage,
   mmToPt,
-  randomFilename,
+  outputFilename,
   readAsArrayBuffer,
   readAsDataUrl,
   reorderByDrag,
@@ -71,7 +71,7 @@ export default function ImagesToPdfTool({ onBack }) {
         const page = pdfDoc.addPage([image.width, image.height]);
         page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
       }
-      downloadBlob(new Blob([await pdfDoc.save()], { type: 'application/pdf' }), randomFilename('images', 'pdf'));
+      downloadBlob(new Blob([await pdfDoc.save()], { type: 'application/pdf' }), outputFilename(items[0].file.name, 'converted', 'pdf'));
       setTone('success');
       setStatus('Images merged into PDF and downloaded.');
     } catch {
