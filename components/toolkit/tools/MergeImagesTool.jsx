@@ -42,6 +42,7 @@ export default function MergeImagesTool({ onBack }) {
   const [previewB, setPreviewB] = useState('');
   const [vertical, setVertical] = useState('');
   const [horizontal, setHorizontal] = useState('');
+  const [matchSizes, setMatchSizes] = useState(true);
   const [status, setStatus] = useState('');
   const [tone, setTone] = useState('muted');
 
@@ -54,22 +55,31 @@ export default function MergeImagesTool({ onBack }) {
 
     const [img1, img2] = await Promise.all([loadImage(await readAsDataUrl(fileA)), loadImage(await readAsDataUrl(fileB))]);
 
+    const targetWidth = matchSizes ? Math.max(img1.width, img2.width) : null;
+    const targetHeight = matchSizes ? Math.max(img1.height, img2.height) : null;
+    const firstWidth = targetWidth || img1.width;
+    const firstHeight = targetHeight || img1.height;
+    const secondWidth = targetWidth || img2.width;
+    const secondHeight = targetHeight || img2.height;
+
     const verticalCanvas = document.createElement('canvas');
-    verticalCanvas.width = Math.max(img1.width, img2.width);
-    verticalCanvas.height = img1.height + img2.height;
-    verticalCanvas.getContext('2d').drawImage(img1, 0, 0);
-    verticalCanvas.getContext('2d').drawImage(img2, 0, img1.height);
+    verticalCanvas.width = Math.max(firstWidth, secondWidth);
+    verticalCanvas.height = firstHeight + secondHeight;
+    verticalCanvas.getContext('2d').drawImage(img1, 0, 0, firstWidth, firstHeight);
+    verticalCanvas.getContext('2d').drawImage(img2, 0, firstHeight, secondWidth, secondHeight);
 
     const horizontalCanvas = document.createElement('canvas');
-    horizontalCanvas.width = img1.width + img2.width;
-    horizontalCanvas.height = Math.max(img1.height, img2.height);
-    horizontalCanvas.getContext('2d').drawImage(img1, 0, 0);
-    horizontalCanvas.getContext('2d').drawImage(img2, img1.width, 0);
+    horizontalCanvas.width = firstWidth + secondWidth;
+    horizontalCanvas.height = Math.max(firstHeight, secondHeight);
+    horizontalCanvas.getContext('2d').drawImage(img1, 0, 0, firstWidth, firstHeight);
+    horizontalCanvas.getContext('2d').drawImage(img2, firstWidth, 0, secondWidth, secondHeight);
 
     setVertical(verticalCanvas.toDataURL('image/png'));
     setHorizontal(horizontalCanvas.toDataURL('image/png'));
     setTone('success');
-    setStatus('Generated both merge layouts.');
+    setStatus(matchSizes
+      ? `Generated both layouts with each image resized to ${targetWidth} × ${targetHeight}px.`
+      : 'Generated both merge layouts using the original image sizes.');
   };
 
   const onSelectA = async (picked) => {
@@ -96,6 +106,19 @@ export default function MergeImagesTool({ onBack }) {
       <div className="row">
         <FileInput accept="image/*" onSelect={onSelectA} label={fileA ? fileA.name : 'Select Image 1'} />
         <FileInput accept="image/*" onSelect={onSelectB} label={fileB ? fileB.name : 'Select Image 2'} />
+        <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            type="checkbox"
+            checked={matchSizes}
+            onChange={(event) => {
+              setMatchSizes(event.target.checked);
+              setVertical('');
+              setHorizontal('');
+              setStatus('');
+            }}
+          />
+          Make both images the same size
+        </label>
         <button className="btn" onClick={generate}>Generate</button>
       </div>
       <div className="output-grid" style={{ marginTop: 12 }}>
