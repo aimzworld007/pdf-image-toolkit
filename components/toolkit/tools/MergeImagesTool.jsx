@@ -43,6 +43,7 @@ export default function MergeImagesTool({ onBack }) {
   const [vertical, setVertical] = useState('');
   const [horizontal, setHorizontal] = useState('');
   const [matchSizes, setMatchSizes] = useState(true);
+  const [gap, setGap] = useState(20);
   const [status, setStatus] = useState('');
   const [tone, setTone] = useState('muted');
 
@@ -64,22 +65,28 @@ export default function MergeImagesTool({ onBack }) {
 
     const verticalCanvas = document.createElement('canvas');
     verticalCanvas.width = Math.max(firstWidth, secondWidth);
-    verticalCanvas.height = firstHeight + secondHeight;
-    verticalCanvas.getContext('2d').drawImage(img1, 0, 0, firstWidth, firstHeight);
-    verticalCanvas.getContext('2d').drawImage(img2, 0, firstHeight, secondWidth, secondHeight);
+    verticalCanvas.height = firstHeight + gap + secondHeight;
+    const verticalContext = verticalCanvas.getContext('2d');
+    verticalContext.fillStyle = '#ffffff';
+    verticalContext.fillRect(0, firstHeight, verticalCanvas.width, gap);
+    verticalContext.drawImage(img1, 0, 0, firstWidth, firstHeight);
+    verticalContext.drawImage(img2, 0, firstHeight + gap, secondWidth, secondHeight);
 
     const horizontalCanvas = document.createElement('canvas');
-    horizontalCanvas.width = firstWidth + secondWidth;
+    horizontalCanvas.width = firstWidth + gap + secondWidth;
     horizontalCanvas.height = Math.max(firstHeight, secondHeight);
-    horizontalCanvas.getContext('2d').drawImage(img1, 0, 0, firstWidth, firstHeight);
-    horizontalCanvas.getContext('2d').drawImage(img2, firstWidth, 0, secondWidth, secondHeight);
+    const horizontalContext = horizontalCanvas.getContext('2d');
+    horizontalContext.fillStyle = '#ffffff';
+    horizontalContext.fillRect(firstWidth, 0, gap, horizontalCanvas.height);
+    horizontalContext.drawImage(img1, 0, 0, firstWidth, firstHeight);
+    horizontalContext.drawImage(img2, firstWidth + gap, 0, secondWidth, secondHeight);
 
     setVertical(verticalCanvas.toDataURL('image/png'));
     setHorizontal(horizontalCanvas.toDataURL('image/png'));
     setTone('success');
-    setStatus(matchSizes
+    setStatus((matchSizes
       ? `Generated both layouts with each image resized to ${targetWidth} × ${targetHeight}px.`
-      : 'Generated both merge layouts using the original image sizes.');
+      : 'Generated both merge layouts using the original image sizes.') + ` Gap: ${gap}px.`);
   };
 
   const onSelectA = async (picked) => {
@@ -118,6 +125,23 @@ export default function MergeImagesTool({ onBack }) {
             }}
           />
           Make both images the same size
+        </label>
+        <label style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          Gap between images (px)
+          <input
+            type="number"
+            min="0"
+            max="500"
+            step="1"
+            value={gap}
+            style={{ width: 88 }}
+            onChange={(event) => {
+              setGap(Math.min(500, Math.max(0, Math.round(Number(event.target.value) || 0))));
+              setVertical('');
+              setHorizontal('');
+              setStatus('');
+            }}
+          />
         </label>
         <button className="btn" onClick={generate}>Generate</button>
       </div>
